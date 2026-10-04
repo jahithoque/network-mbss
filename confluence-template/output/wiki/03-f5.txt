@@ -1,0 +1,84 @@
+{details:id=mbss-platform}
+||Platform|Load Balancer – F5 BIG-IP|
+||Vendor / product|F5 BIG-IP (LTM / GTM / ASM / APM) on TMOS|
+||OS versions in scope|_\[e.g., 15.1.x, 17.1.x\]_|
+||Components in scope|TMOS system & management, management port and self IPs, LTM objects (virtual servers, profiles, SSL), provisioned modules|
+||Rule ID prefix|{{F5}}|
+||Devices in scope|_\[count or link to inventory\]_|
+||Total rules|0|
+||Automated rules|0|
+||Automation coverage|0%|
+||Owner team|_\[Team\]_|
+||Last full review|YYYY-MM-DD|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{info:title=How to maintain this page}
+* One row per rule in the Rule Register. Rule IDs are never renumbered or reused.
+* *Current Check*: the command or API the tool runs and the pass condition.
+* *When the tool's check changes*: move the text from Current Check to Old Check, write the new logic in Current Check, give the reason and date in Comments, and update Last Review.
+* To retire a rule, strike through the row and write {{RETIRED vX.Y}} in Comments.
+* Update the counts in the table above after editing. The overview dashboard reads them.
+{info}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Components: TMOS system & management, management port and self IPs, LTM objects (virtual servers, profiles, SSL), provisioned modules
+* Data source: {{tmsh list sys ...}}, {{tmsh list ltm ...}}
+* Data source: iControl REST, e.g. {{/mgmt/tm/sys/sshd}}
+* Data source: {{bigip.conf}} / {{bigip_base.conf}} from UCS backups
+* State in *Comments* when a rule applies only to a module (ASM, APM) or only to specific partitions.
+* Note vCMP guest vs host applicability where it differs.
+
+h2. Rule register
+
+||Rule ID||Rule Name||Domain||Description / Requirement||Severity||Expected (Compliant) Value||Current Check (Automation Tool)||Old Check||Automation Status||Last Review (Date / By)||Comments||
+|*F5-MGMT-001* \\ _EXAMPLE – delete_|Restrict SSH management access|MGMT|SSH to the BIG-IP must be limited to approved management subnets.|{status:colour=Yellow|title=HIGH}|{{sys sshd allow}} lists only approved management subnets; never {{ALL}}|{{tmsh list sys sshd allow}}; FAIL if {{ALL}} or any subnet not in the approved list|{{tmsh list sys sshd allow}}; FAIL only if value is {{ALL}}|{status:colour=Green|title=AUTOMATED}|2026-09-30 / Reviewer name|Approved subnet list is kept in the automation tool's variables file.|
+|_\[F5-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+|_\[F5-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+
+h2. Rule details
+
+Optional. Copy this expand once per rule that needs more detail than the register holds.
+
+{expand:title=F5-DOMAIN-NNN – Rule name – details}
+||Field||Value||
+|*Applies to*|_\[All / gateways only / routers only / ...\]_|
+|*Rationale / risk*|_\[Why the rule exists; what happens if it is not met\]_|
+|*Automation check ID*|_\[ID of the check in the automation tool\]_|
+|*Data source / command*|_\[Command, API call or file the tool reads\]_|
+|*Parsing method*|_\[Regex / TextFSM / Genie / JSON path\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Fail condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not licensed or not configured\]_|
+|*Remediation impact*|_\[None / session drop / service restart / reboot\]_|
+|*Auto-remediation allowed*|_\[Yes / No / With change approval\]_|
+|*Reference*|_\[CIS section, internal policy clause, NIST / ISO control\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+|*Why the check changed*|_\[Old → current, with date and reason\]_|
+
+*Remediation (example syntax, verify before use):*
+
+{code}
+tmsh modify sys sshd allow replace-all-with { 10.10.0.0/24 }
+tmsh save sys config
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[No change / check updated / rule updated\]_|_\[Notes\]_|
+{expand}
+
+h2. Known automation limitations & false positives
+
+||Rule ID||Limitation / false-positive scenario||Impact||Workaround||Jira||
+|_\[F5-DOMAIN-NNN\]_|_\[What the tool gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step\]_|_\[KEY-123\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft from template|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

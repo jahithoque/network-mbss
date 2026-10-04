@@ -1,0 +1,18 @@
+{note:title=Before you add an exception}
+* Every exception needs an expiry date and a named risk owner.
+* Exclude the device from the automation tool's check for that rule, and record that in *Excluded in tool?*.
+* Put the Exception ID in the Comments column of the rule on its platform page.
+{note}
+
+h2. Status
+
+||Status||Meaning||
+|{status:colour=Green|title=ACTIVE}|Approved and within its expiry date|
+|{status:colour=Yellow|title=EXPIRING}|Expires within 30 days; renew or remediate|
+|{status:colour=Red|title=EXPIRED}|Past expiry; the device is non-compliant|
+|{status:colour=Grey|title=CLOSED}|Remediated or no longer needed|
+
+h2. Register
+
+||Exception ID||Rule ID||Platform||Affected devices||Business justification||Compensating control||Risk accepted by||Approved on||Expires on||Excluded in tool?||Status||
+|*EXC-001*|_\[CSCO-MGMT-001\]_|_\[Cisco IOS\]_|_\[Hostnames / group\]_|_\[Why it can't comply\]_|_\[What reduces the risk\]_|_\[Name, role\]_|YYYY-MM-DD|YYYY-MM-DD|_\[Yes / No\]_|{status:colour=Green|title=ACTIVE}|

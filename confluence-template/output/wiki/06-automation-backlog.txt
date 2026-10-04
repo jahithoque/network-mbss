@@ -1,0 +1,17 @@
+Every rule whose Automation Status is PARTIAL, MANUAL or PLANNED has a row here.
+
+{tip:title=Jira}
+If the work is tracked in Jira, add a Jira Issues macro below this panel filtered on the label {{mbss-automation}}.
+{tip}
+
+h2. Backlog
+
+||Rule ID||Platform||Current status||Gap (why not fully automated)||Proposed check||Owner||Target date||Jira||Progress||
+|_\[CP-POL-002\]_|_\[Check Point\]_|{status:colour=Yellow|title=PARTIAL}|_\[e.g., inline layers not parsed\]_|_\[Command / API + logic\]_|_\[Name\]_|YYYY-MM-DD|_\[KEY-123\]_|{status:colour=Grey|title=NOT STARTED}|
+
+h2. Progress status
+
+||Status||Meaning||
+|{status:colour=Grey|title=NOT STARTED}|Not picked up|
+|{status:colour=Blue|title=IN PROGRESS}|Check being built or tested|
+|{status:colour=Green|title=DONE}|Live in the tool; platform page updated|

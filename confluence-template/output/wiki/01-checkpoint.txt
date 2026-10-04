@@ -1,0 +1,85 @@
+{details:id=mbss-platform}
+||Platform|Firewall – Check Point|
+||Vendor / product|Check Point Security Gateways & Security Management (Gaia OS)|
+||OS versions in scope|_\[e.g., R81.20, R82\]_|
+||Components in scope|Gaia OS (gateways), Gaia OS (management server), security policy / rulebase, log server|
+||Rule ID prefix|{{CP}}|
+||Devices in scope|_\[count or link to inventory\]_|
+||Total rules|0|
+||Automated rules|0|
+||Automation coverage|0%|
+||Owner team|_\[Team\]_|
+||Last full review|YYYY-MM-DD|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{info:title=How to maintain this page}
+* One row per rule in the Rule Register. Rule IDs are never renumbered or reused.
+* *Current Check*: the command or API the tool runs and the pass condition.
+* *When the tool's check changes*: move the text from Current Check to Old Check, write the new logic in Current Check, give the reason and date in Comments, and update Last Review.
+* To retire a rule, strike through the row and write {{RETIRED vX.Y}} in Comments.
+* Update the counts in the table above after editing. The overview dashboard reads them.
+{info}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Components: Gaia OS (gateways), Gaia OS (management server), security policy / rulebase, log server
+* Data source: {{clish}}: {{show configuration}}, {{show password-controls all}}
+* Data source: Management API: {{mgmt_cli show access-rulebase}} (JSON)
+* Data source: Expert mode files where no clish/API equivalent exists
+* *CP-POL rules* apply to the security policy on the management server, not to individual gateways.
+* State in *Comments* when a rule applies only to gateways or only to management servers.
+* Note inline layers and shared layers when the rulebase check does not parse them.
+
+h2. Rule register
+
+||Rule ID||Rule Name||Domain||Description / Requirement||Severity||Expected (Compliant) Value||Current Check (Automation Tool)||Old Check||Automation Status||Last Review (Date / By)||Comments||
+|*CP-AAA-001* \\ _EXAMPLE – delete_|Gaia password minimum length|AAA|Local Gaia accounts must use a minimum password length of 14 characters.|{status:colour=Yellow|title=HIGH}|{{min-password-length}} is 14 or higher|clish {{show password-controls all}}; parse minimum password length; PASS if ≥ 14|Manual check in Gaia WebUI › User Management › Password Policy|{status:colour=Green|title=AUTOMATED}|2026-09-30 / Reviewer name|Applies to gateways and management servers. Moved from manual to automated check in v1.1.|
+|_\[CP-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+|_\[CP-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+
+h2. Rule details
+
+Optional. Copy this expand once per rule that needs more detail than the register holds.
+
+{expand:title=CP-DOMAIN-NNN – Rule name – details}
+||Field||Value||
+|*Applies to*|_\[All / gateways only / routers only / ...\]_|
+|*Rationale / risk*|_\[Why the rule exists; what happens if it is not met\]_|
+|*Automation check ID*|_\[ID of the check in the automation tool\]_|
+|*Data source / command*|_\[Command, API call or file the tool reads\]_|
+|*Parsing method*|_\[Regex / TextFSM / Genie / JSON path\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Fail condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not licensed or not configured\]_|
+|*Remediation impact*|_\[None / session drop / service restart / reboot\]_|
+|*Auto-remediation allowed*|_\[Yes / No / With change approval\]_|
+|*Reference*|_\[CIS section, internal policy clause, NIST / ISO control\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+|*Why the check changed*|_\[Old → current, with date and reason\]_|
+
+*Remediation (example syntax, verify before use):*
+
+{code}
+set password-controls min-password-length 14
+save config
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[No change / check updated / rule updated\]_|_\[Notes\]_|
+{expand}
+
+h2. Known automation limitations & false positives
+
+||Rule ID||Limitation / false-positive scenario||Impact||Workaround||Jira||
+|_\[CP-DOMAIN-NNN\]_|_\[What the tool gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step\]_|_\[KEY-123\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft from template|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

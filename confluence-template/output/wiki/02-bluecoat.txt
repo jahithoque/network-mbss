@@ -1,0 +1,85 @@
+{details:id=mbss-platform}
+||Platform|Proxy – BlueCoat|
+||Vendor / product|Symantec BlueCoat ProxySG / Edge SWG (SGOS)|
+||OS versions in scope|_\[e.g., SGOS 7.3.x\]_|
+||Components in scope|SGOS system settings, management services, proxy policy (VPM / CPL), authentication realms|
+||Rule ID prefix|{{BC}}|
+||Devices in scope|_\[count or link to inventory\]_|
+||Total rules|0|
+||Automated rules|0|
+||Automation coverage|0%|
+||Owner team|_\[Team\]_|
+||Last full review|YYYY-MM-DD|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{info:title=How to maintain this page}
+* One row per rule in the Rule Register. Rule IDs are never renumbered or reused.
+* *Current Check*: the command or API the tool runs and the pass condition.
+* *When the tool's check changes*: move the text from Current Check to Old Check, write the new logic in Current Check, give the reason and date in Comments, and update Last Review.
+* To retire a rule, strike through the row and write {{RETIRED vX.Y}} in Comments.
+* Update the counts in the table above after editing. The overview dashboard reads them.
+{info}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Components: SGOS system settings, management services, proxy policy (VPM / CPL), authentication realms
+* Data source: SGOS CLI: {{show config}}
+* Data source: Policy export (VPM / CPL) for policy rules
+* Data source: Management Console where no CLI equivalent exists
+* *BC-POL rules* are checked against the installed policy, not the VPM draft.
+* State in *Comments* when a rule applies only to explicit or only to transparent deployments.
+
+h2. Rule register
+
+||Rule ID||Rule Name||Domain||Description / Requirement||Severity||Expected (Compliant) Value||Current Check (Automation Tool)||Old Check||Automation Status||Last Review (Date / By)||Comments||
+|*BC-MGMT-001* \\ _EXAMPLE – delete_|Disable Telnet and HTTP management consoles|MGMT|Only encrypted management services (HTTPS-Console, SSH-Console) may be enabled.|{status:colour=Yellow|title=HIGH}|Telnet-Console and HTTP-Console disabled; HTTPS-Console and SSH-Console enabled|{{show config}} › management-services section; FAIL if Telnet-Console or HTTP-Console is enabled|Regex matched Telnet-Console only; HTTP-Console was not checked|{status:colour=Green|title=AUTOMATED}|2026-09-30 / Reviewer name|Old check missed HTTP-Console. Updated in v1.1.|
+|_\[BC-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+|_\[BC-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+
+h2. Rule details
+
+Optional. Copy this expand once per rule that needs more detail than the register holds.
+
+{expand:title=BC-DOMAIN-NNN – Rule name – details}
+||Field||Value||
+|*Applies to*|_\[All / gateways only / routers only / ...\]_|
+|*Rationale / risk*|_\[Why the rule exists; what happens if it is not met\]_|
+|*Automation check ID*|_\[ID of the check in the automation tool\]_|
+|*Data source / command*|_\[Command, API call or file the tool reads\]_|
+|*Parsing method*|_\[Regex / TextFSM / Genie / JSON path\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Fail condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not licensed or not configured\]_|
+|*Remediation impact*|_\[None / session drop / service restart / reboot\]_|
+|*Auto-remediation allowed*|_\[Yes / No / With change approval\]_|
+|*Reference*|_\[CIS section, internal policy clause, NIST / ISO control\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+|*Why the check changed*|_\[Old → current, with date and reason\]_|
+
+*Remediation (example syntax, verify before use):*
+
+{code}
+#(config) management-services
+#(config management-services) disable Telnet-Console
+#(config management-services) disable HTTP-Console
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[No change / check updated / rule updated\]_|_\[Notes\]_|
+{expand}
+
+h2. Known automation limitations & false positives
+
+||Rule ID||Limitation / false-positive scenario||Impact||Workaround||Jira||
+|_\[BC-DOMAIN-NNN\]_|_\[What the tool gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step\]_|_\[KEY-123\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft from template|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

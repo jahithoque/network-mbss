@@ -1,0 +1,113 @@
+{details:id=mbss-overview}
+||Document owner|_\[Name / team\]_|
+||Approver|_\[Name\]_|
+||Version|0.1|
+||Document status|{status:colour=Grey|title=DRAFT}|
+||Effective date|YYYY-MM-DD|
+||Next review due|YYYY-MM-DD|
+||Classification|_\[Internal / Confidential\]_|
+{details}
+
+{toc:maxLevel=2}
+
+h2. Purpose
+
+This space defines the Minimum Baseline Security Standard (MBSS) for network devices. Each rule states the required configuration, how the Network Automation tool checks it today, and how the check has changed over time.
+
+h2. Scope
+
+||Category||Vendor / product||OS versions in scope||Devices||Page||Owner team||
+|Firewall|Check Point Security Gateways & Security Management (Gaia OS)|_\[e.g., R81.20, R82\]_|_\[count\]_|MBSS – Firewall – Check Point|_\[Team\]_|
+|Proxy|Symantec BlueCoat ProxySG / Edge SWG (SGOS)|_\[e.g., SGOS 7.3.x\]_|_\[count\]_|MBSS – Proxy – BlueCoat ProxySG|_\[Team\]_|
+|Load Balancer|F5 BIG-IP (LTM / GTM / ASM / APM) on TMOS|_\[e.g., 15.1.x, 17.1.x\]_|_\[count\]_|MBSS – Load Balancer – F5 BIG-IP|_\[Team\]_|
+|Routers & Switches|Cisco IOS and IOS-XE routers and switches|_\[e.g., IOS 15.2(x), IOS-XE 17.x\]_|_\[count\]_|MBSS – Routers & Switches – Cisco IOS|_\[Team\]_|
+
+*Out of scope: *_\[List excluded device types, lab devices, etc.\]_
+
+h2. How to read this standard
+
+h3. Severity
+
+||Severity||Meaning||Target fix time (align with policy)||
+|{status:colour=Red|title=CRITICAL}|Direct path to compromise or outage|e.g., 7 days|
+|{status:colour=Yellow|title=HIGH}|Significant weakness in access, crypto or logging|e.g., 30 days|
+|{status:colour=Blue|title=MEDIUM}|Hardening gap with limited direct exposure|e.g., 90 days|
+|{status:colour=Grey|title=LOW}|Best practice or hygiene item|e.g., next change window|
+
+h3. Automation status
+
+||Status||Meaning||
+|{status:colour=Green|title=AUTOMATED}|The automation tool checks the full requirement|
+|{status:colour=Yellow|title=PARTIAL}|The tool checks part of the requirement. The gap is described in Comments|
+|{status:colour=Blue|title=MANUAL}|An engineer checks it during the review|
+|{status:colour=Purple|title=PLANNED}|Automation is in the backlog (see MBSS – Automation Backlog)|
+|{status:colour=Grey|title=NOT FEASIBLE}|Can't be verified from configuration or API output|
+
+h2. Coverage dashboard
+
+The report below reads the Page Properties table at the top of each platform page. Add the label {{mbss-platform}} to every platform page so it appears here.
+
+{detailssummary:cql=label = "mbss-platform" and space = currentSpace()|headings=Platform,Total rules,Automated rules,Automation coverage,Last full review,Next review due,Owner team}
+
+{expand:title=Manual coverage table (use if the report macro is not available)}
+||Platform||Total||Automated||Partial||Manual||Planned||Not feasible||Coverage %||Last full review||
+|Check Point|0|0|0|0|0|0|0%|YYYY-MM-DD|
+|BlueCoat|0|0|0|0|0|0|0%|YYYY-MM-DD|
+|F5 BIG-IP|0|0|0|0|0|0|0%|YYYY-MM-DD|
+|Cisco IOS|0|0|0|0|0|0|0%|YYYY-MM-DD|
+{expand}
+
+h2. Cross-vendor control matrix
+
+Enter the Rule ID for each platform, or N/A. Leave a cell empty only while the rule is still being written.
+
+||Control||Check Point||BlueCoat||F5 BIG-IP||Cisco IOS||
+|Encrypted management only (SSH / HTTPS)|–|–|–|–|
+|Management access restricted (ACL / allow-list)|–|–|–|–|
+|Centralized AAA (TACACS+ / RADIUS)|–|–|–|–|
+|Local account password policy|–|–|–|–|
+|Remote syslog configured|–|–|–|–|
+|NTP from approved servers|–|–|–|–|
+|SNMPv3 only, no default communities|–|–|–|–|
+|Login warning banner|–|–|–|–|
+|Unused services disabled|–|–|–|–|
+|Approved software version|–|–|–|–|
+|Configuration backup|–|–|–|–|
+
+h2. Rule ID convention
+
+Format: {{<PREFIX>-<DOMAIN>-<NNN>}}, for example {{CSCO-MGMT-001}}. Prefixes: {{CP}} Check Point, {{BC}} BlueCoat, {{F5}} F5 BIG-IP, {{CSCO}} Cisco IOS. Rule IDs are never renumbered or reused.
+
+||Domain code||Domain||Typical controls||
+|{{MGMT}}|Management plane access|SSH/HTTPS only, management ACLs or allow-lists, session timeouts|
+|{{AAA}}|Authentication & authorization|TACACS+/RADIUS, local fallback account, password policy, RBAC|
+|{{CRYPTO}}|Cryptography|TLS versions, cipher suites, key lengths, certificate validity|
+|{{LOG}}|Logging & monitoring|Remote syslog, log levels, timestamps, audit logging|
+|{{NTP}}|Time synchronization|Approved NTP servers, NTP authentication|
+|{{SNMP}}|SNMP|SNMPv3 only, no default communities, ACL-restricted|
+|{{SVC}}|Service hardening|Unused services disabled (HTTP server, CDP, Telnet, small servers)|
+|{{BANNER}}|Legal banners|Login / MOTD warning banner|
+|{{POL}}|Policy / rulebase|No any-any rules, cleanup rule, logging on rules, default deny|
+|{{CTRL}}|Control plane|Control-plane policing, routing protocol authentication|
+|{{HA}}|Availability & backup|HA sync, configuration backup|
+|{{VER}}|Software & patching|Approved OS version, end-of-life / end-of-support|
+
+h2. Review process
+
+* *Scheduled review: *_\[quarterly\]_. Update Last Review on every rule you review, even if nothing changed.
+* *Also review after: *a major OS upgrade, a new CIS Benchmark release, a change to the automation tool's check logic, or an audit finding.
+* *When a check changes: *copy Current Check into Old Check, write the new logic in Current Check, and give the reason and date in Comments.
+* *Exceptions *go in MBSS – Exceptions & Waivers Register, not in the rule tables.
+
+h2. Change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft from template|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|
+
+h2. References
+
+* CIS Benchmarks (Cisco IOS, Check Point Firewall, F5 BIG-IP): https://www.cisecurity.org/cis-benchmarks
+* Vendor hardening guides: _\[add links\]_
+* Internal network security policy: _\[add link\]_
+* Network Automation tool documentation / repository: _\[add link\]_

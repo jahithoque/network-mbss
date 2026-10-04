@@ -1,0 +1,84 @@
+{details:id=mbss-platform}
+||Platform|Routers & Switches – Cisco IOS|
+||Vendor / product|Cisco IOS and IOS-XE routers and switches|
+||OS versions in scope|_\[e.g., IOS 15.2(x), IOS-XE 17.x\]_|
+||Components in scope|Routers, L3 switches, L2 access switches|
+||Rule ID prefix|{{CSCO}}|
+||Devices in scope|_\[count or link to inventory\]_|
+||Total rules|0|
+||Automated rules|0|
+||Automation coverage|0%|
+||Owner team|_\[Team\]_|
+||Last full review|YYYY-MM-DD|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{info:title=How to maintain this page}
+* One row per rule in the Rule Register. Rule IDs are never renumbered or reused.
+* *Current Check*: the command or API the tool runs and the pass condition.
+* *When the tool's check changes*: move the text from Current Check to Old Check, write the new logic in Current Check, give the reason and date in Comments, and update Last Review.
+* To retire a rule, strike through the row and write {{RETIRED vX.Y}} in Comments.
+* Update the counts in the table above after editing. The overview dashboard reads them.
+{info}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Components: Routers, L3 switches, L2 access switches
+* Data source: {{show running-config}}, {{show version}}, {{show ip ssh}}
+* Data source: Parsed with regex, TextFSM or Genie (state which one in the rule detail)
+* State in *Comments* when a rule applies only to routers, only to L3 switches or only to access switches.
+* Note rules that differ between IOS and IOS-XE syntax.
+
+h2. Rule register
+
+||Rule ID||Rule Name||Domain||Description / Requirement||Severity||Expected (Compliant) Value||Current Check (Automation Tool)||Old Check||Automation Status||Last Review (Date / By)||Comments||
+|*CSCO-MGMT-001* \\ _EXAMPLE – delete_|Allow only SSHv2 on VTY lines|MGMT|Remote management must use SSH version 2. Telnet must be disabled on all VTY lines.|{status:colour=Yellow|title=HIGH}|{{ip ssh version 2}} and {{transport input ssh}} under every {{line vty}}|Parse {{show running-config}}: PASS if {{ip ssh version 2}} is present AND every {{line vty}} block has {{transport input ssh}} only|Regex for {{ip ssh version 2}} only; VTY transport not checked|{status:colour=Green|title=AUTOMATED}|2026-09-30 / Reviewer name|Old check passed devices that still allowed Telnet on vty 5 15.|
+|_\[CSCO-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+|_\[CSCO-DOMAIN-NNN\]_|_\[Short rule name\]_|_\[Domain code\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Exact config / value that passes\]_|_\[Command or API + pass condition\]_|_\[Previous check logic, or N/A\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, reason for check change, exception IDs\]_|
+
+h2. Rule details
+
+Optional. Copy this expand once per rule that needs more detail than the register holds.
+
+{expand:title=CSCO-DOMAIN-NNN – Rule name – details}
+||Field||Value||
+|*Applies to*|_\[All / gateways only / routers only / ...\]_|
+|*Rationale / risk*|_\[Why the rule exists; what happens if it is not met\]_|
+|*Automation check ID*|_\[ID of the check in the automation tool\]_|
+|*Data source / command*|_\[Command, API call or file the tool reads\]_|
+|*Parsing method*|_\[Regex / TextFSM / Genie / JSON path\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Fail condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not licensed or not configured\]_|
+|*Remediation impact*|_\[None / session drop / service restart / reboot\]_|
+|*Auto-remediation allowed*|_\[Yes / No / With change approval\]_|
+|*Reference*|_\[CIS section, internal policy clause, NIST / ISO control\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+|*Why the check changed*|_\[Old → current, with date and reason\]_|
+
+*Remediation (example syntax, verify before use):*
+
+{code}
+ip ssh version 2
+line vty 0 15
+ transport input ssh
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[No change / check updated / rule updated\]_|_\[Notes\]_|
+{expand}
+
+h2. Known automation limitations & false positives
+
+||Rule ID||Limitation / false-positive scenario||Impact||Workaround||Jira||
+|_\[CSCO-DOMAIN-NNN\]_|_\[What the tool gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step\]_|_\[KEY-123\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft from template|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|
