@@ -18,7 +18,7 @@
 * *Current Check*: the command or API the tool runs and the pass condition.
 * *When the tool's check changes*: move the text from Current Check to Old Check, write the new logic in Current Check, give the reason and date in Comments, and update Last Review.
 * To retire a rule, strike through the row and write {{RETIRED vX.Y}} in Comments.
-* Update the counts in the table above after editing. The overview dashboard reads them.
+* Update the counts in the table above after editing. The coverage dashboard on the overview page uses them.
 {info}
 
 {toc:maxLevel=2}

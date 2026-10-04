@@ -144,7 +144,6 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
 .cf-st-blue { background: var(--st-blue-bg); color: var(--st-blue-fg); }
 .cf-st-purple { background: var(--st-purple-bg); color: var(--st-purple-fg); }
 .cf-ph { color: var(--ph); }
-.paper .cf-macro { max-width: none; font: 400 12px/1.5 var(--f-mono); color: var(--muted); background: var(--sunken); border: 1px dashed var(--line-strong); border-radius: 4px; padding: 6px 10px; }
 .cf-panel { border: 1px solid; border-radius: 5px; padding: 10px 16px; margin: 12px 0; }
 .cf-panel > p:first-child { margin-top: 2px; }
 .cf-panel-info { background: var(--pn-info-bg); border-color: var(--pn-info-line); }
@@ -152,7 +151,7 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
 .cf-panel-tip { background: var(--pn-tip-bg); border-color: var(--pn-tip-line); }
 .cf-panel-warning { background: var(--pn-warning-bg); border-color: var(--pn-warning-line); }
 .cf-expand { border: 1px solid var(--line); border-radius: 5px; padding: 6px 14px 10px; margin: 10px 0; }
-.cf-expand > summary { cursor: pointer; font-weight: 600; padding: 4px 0; color: var(--accent); }
+.cf-expand::before { content: "▾ " attr(data-title); display: block; font-weight: 600; padding: 4px 0; color: var(--accent); }
 .cf-code { background: var(--sunken); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; overflow-x: auto; font: 400 12.5px/1.5 var(--f-mono); }
 .paper .cf-code code { background: none; border: 0; padding: 0; font-size: inherit; }
 
@@ -172,14 +171,14 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
   <header class="top">
     <p class="eyebrow">Network MBSS · Confluence templates</p>
     <h1>MBSS page templates</h1>
-    <p class="lede">Seven pages: an overview, one page per platform (Check Point, BlueCoat, F5, Cisco IOS), an exceptions register and an automation backlog. Pick a page, copy it in the format your Confluence accepts, paste it, then add your rules to the Rule Register.</p>
+    <p class="lede">Seven pages: an overview, one page per platform (Check Point, BlueCoat, F5, Cisco IOS), an exceptions register and an automation backlog. Pick a page, press <strong>Copy page</strong>, create the page in Confluence and paste into its body. Then type your rules into the Rule Register.</p>
   </header>
 
   <section class="routes" aria-label="Which copy option to use">
     <div class="route">
       <h2>Confluence Cloud</h2>
-      <span class="btnname">Copy for Confluence Cloud</span>
-      <p>Paste into a new page. Headings, tables, lists and code come across. Status values arrive as plain text, and the grey <em>[Insert … macro]</em> lines mark where to add macros with <code>/toc</code>, <code>/page properties</code> and <code>/status</code>.</p>
+      <span class="btnname">Copy page</span>
+      <p>Paste straight into the page body with Ctrl+V (⌘V on Mac). Coloured status lozenges, info panels, expands, tables and code blocks paste as real Confluence elements. Nothing needs adding afterwards.</p>
     </div>
     <div class="route">
       <h2>Data Center / Server</h2>
@@ -207,7 +206,8 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
           <p class="labels" id="labels"></p>
         </div>
         <div class="actions">
-          <button class="btn primary" id="copy-rich" type="button">Copy for Confluence Cloud</button>
+          <button class="btn primary" id="copy-rich" type="button">Copy page</button>
+          <button class="btn" id="copy-title" type="button">Copy title</button>
           <button class="btn" id="copy-wiki" type="button">Copy wiki markup</button>
           <button class="btn" id="copy-storage" type="button">Copy storage format</button>
         </div>
@@ -233,9 +233,10 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
     <h2>After pasting</h2>
     <ol>
       <li>Create <strong>Network MBSS</strong> first, then create the other six pages as its children, using the page titles shown above.</li>
-      <li>Add the labels shown under each title. The overview dashboard finds platform pages by the <code>mbss-platform</code> label.</li>
+      <li>Paste the title into the title field and the copied page into the body. Each page is self-contained.</li>
+      <li>Optional: add the labels shown under each title, so the pages are easy to find by search.</li>
       <li>Delete the row marked <em>EXAMPLE – delete</em> once your first real rule is in. To add a row, press Tab in the last cell of the table.</li>
-      <li>After you load the rules, update Total rules, Automated rules and Automation coverage in the page's properties table so the dashboard is correct.</li>
+      <li>After you load the rules, update Total rules, Automated rules and Automation coverage in the summary table at the top of the platform page, and copy them into the Coverage dashboard on the overview page.</li>
       <li>The remediation snippets in Rule details are example syntax. Check them against your OS versions before anyone uses them.</li>
     </ol>
   </section>
@@ -349,7 +350,7 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
 
   $("copy-rich").addEventListener("click", function () {
     var p = pages[cur];
-    var done = function () { toast("Copied “" + p.title + "”. Paste it into a new Confluence page."); };
+    var done = function () { toast("Copied. In Confluence, create a page titled “" + p.title + "” and paste into the body."); };
     var fallback = function () {
       if (execCopyHtml(p.html)) done();
       else { selectPreview(); toast(manual); }
@@ -380,6 +381,14 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
       navigator.clipboard.writeText(text).then(done, fallback);
     } catch (e) { fallback(); }
   }
+  $("copy-title").addEventListener("click", function () {
+    var t = pages[cur].title;
+    var done = function () { toast("Copied the title “" + t + "”."); };
+    try {
+      if (!navigator.clipboard) throw new Error("no clipboard");
+      navigator.clipboard.writeText(t).then(done, function () { toast("Your browser blocked the clipboard. Title: " + t); });
+    } catch (e) { toast("Your browser blocked the clipboard. Title: " + t); }
+  });
   $("copy-wiki").addEventListener("click", function () { copySource("wiki", "wiki markup"); });
   $("copy-storage").addEventListener("click", function () { copySource("storage", "storage format"); });
 

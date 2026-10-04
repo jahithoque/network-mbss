@@ -15,6 +15,8 @@ Block types
   ("table", headers, rows)                rows: [[inlines, ...], ...]
   ("expand", title, blocks)
   ("code", text)
+  ("alt", macro_blocks, paste_blocks)     macro_blocks go to storage / wiki,
+                                          paste_blocks to the copy-paste HTML
 
 Inlines are a string or a list of: str, ("b", s), ("i", s), ("code", s),
 ("st", colour, title) status lozenge, ("ph", s) placeholder, ("br",).
@@ -278,6 +280,11 @@ def overview_page():
         "Approved software version",
         "Configuration backup",
     ]
+    coverage_table = (
+        "table",
+        ["Platform", "Total", "Automated", "Partial", "Manual", "Planned", "Not feasible", "Coverage %", "Last full review"],
+        [[p["short"], "0", "0", "0", "0", "0", "0", "0%", "YYYY-MM-DD"] for p in PLATFORMS],
+    )
     return [
         ("props", "mbss-overview", [
             ("Document owner", ph("Name / team")),
@@ -299,14 +306,15 @@ def overview_page():
         ("h", 2, "How to read this standard"),
         *status_legend(),
         ("h", 2, "Coverage dashboard"),
-        ("p", ["The report below reads the Page Properties table at the top of each platform page. "
-               "Add the label ", ("code", "mbss-platform"), " to every platform page so it appears here."]),
-        ("report", 'label = "mbss-platform" and space = currentSpace()',
-         "Platform,Total rules,Automated rules,Automation coverage,Last full review,Next review due,Owner team"),
-        ("expand", "Manual coverage table (use if the report macro is not available)", [
-            ("table",
-             ["Platform", "Total", "Automated", "Partial", "Manual", "Planned", "Not feasible", "Coverage %", "Last full review"],
-             [[p["short"], "0", "0", "0", "0", "0", "0", "0%", "YYYY-MM-DD"] for p in PLATFORMS]),
+        ("alt", [
+            ("p", ["The report below reads the Page Properties table at the top of each platform page. "
+                   "Add the label ", ("code", "mbss-platform"), " to every platform page so it appears here."]),
+            ("report", 'label = "mbss-platform" and space = currentSpace()',
+             "Platform,Total rules,Automated rules,Automation coverage,Last full review,Next review due,Owner team"),
+            ("expand", "Manual coverage table (use if the report macro is not available)", [coverage_table]),
+        ], [
+            ("p", ["Copy these numbers from the summary table at the top of each platform page whenever its rules change."]),
+            coverage_table,
         ]),
         ("h", 2, "Cross-vendor control matrix"),
         ("p", ["Enter the Rule ID for each platform, or N/A. Leave a cell empty only while the rule is still being written."]),
@@ -386,7 +394,7 @@ def platform_page(p):
                 [("b", "When the tool's check changes"), ": move the text from Current Check to Old Check, "
                  "write the new logic in Current Check, give the reason and date in Comments, and update Last Review."],
                 ["To retire a rule, strike through the row and write ", ("code", "RETIRED vX.Y"), " in Comments."],
-                ["Update the counts in the table above after editing. The overview dashboard reads them."],
+                ["Update the counts in the table above after editing. The coverage dashboard on the overview page uses them."],
             ]),
         ]),
         ("toc", 2),

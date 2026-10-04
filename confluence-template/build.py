@@ -94,6 +94,8 @@ def s_blocks(blocks):
             out.append(s_macro("expand", {"title": b[1]}, s_blocks(b[2])))
         elif t == "code":
             out.append(s_macro("code", plain=b[1]))
+        elif t == "alt":
+            out.append(s_blocks(b[1]))
     return "\n".join(out)
 
 
@@ -161,10 +163,22 @@ def w_blocks(blocks):
             out.append("{expand:title=%s}\n%s\n{expand}" % (b[1], w_blocks(b[2])))
         elif t == "code":
             out.append("{code}\n%s\n{code}" % b[1])
+        elif t == "alt":
+            out.append(w_blocks(b[1]))
     return "\n\n".join(out)
 
 
 # ------------------------------------------------------------ HTML (preview + rich copy)
+#
+# This HTML is what "Copy page" puts on the clipboard. Status lozenges, panels
+# and expands carry the data attributes the Confluence Cloud editor's paste
+# parser (@atlaskit/adf-schema parseDOM rules) turns back into real elements.
+# Macros that can't be pasted (TOC, Page Properties, the report) are left out
+# or replaced by plain tables, so a pasted page needs no follow-up.
+
+ADF_COLOUR = {"Grey": "neutral", "Red": "red", "Yellow": "yellow",
+              "Green": "green", "Blue": "blue", "Purple": "purple"}
+
 
 def h_esc(s):
     return html.escape(s, quote=True)
@@ -182,7 +196,8 @@ def h_inline(x):
         elif i[0] == "code":
             out += f"<code>{h_esc(i[1])}</code>"
         elif i[0] == "st":
-            out += f'<span class="cf-st cf-st-{i[1].lower()}">{h_esc(i[2])}</span>'
+            out += (f'<span class="cf-st cf-st-{i[1].lower()}" data-node-type="status" '
+                    f'data-color="{ADF_COLOUR[i[1]]}" data-style="" data-text="{h_esc(i[2])}">{h_esc(i[2])}</span>')
         elif i[0] == "ph":
             out += f'<em class="cf-ph">[{h_esc(i[1])}]</em>'
         elif i[0] == "br":
@@ -214,21 +229,19 @@ def h_blocks(blocks):
         elif t == "ul":
             out.append("<ul>" + "".join(f"<li>{h_inline(i)}</li>" for i in b[1]) + "</ul>")
         elif t == "panel":
-            out.append(f'<div class="cf-panel cf-panel-{b[1]}"><p><strong>{h_esc(b[2])}</strong></p>{h_blocks(b[3])}</div>')
-        elif t == "toc":
-            out.append('<p class="cf-macro">[Insert Table of Contents macro here]</p>')
+            out.append(f'<div class="cf-panel cf-panel-{b[1]}" data-panel-type="{b[1]}">'
+                       f'<p><strong>{h_esc(b[2])}</strong></p>{h_blocks(b[3])}</div>')
         elif t == "props":
-            out.append('<p class="cf-macro">[Page Properties macro: put the table below inside it]</p>'
-                       + h_table(None, b[2], header_col=True, cls="cf-props"))
-        elif t == "report":
-            out.append(f'<p class="cf-macro">[Insert Page Properties Report macro here. CQL: {h_esc(b[1])}]</p>')
+            out.append(h_table(None, b[2], header_col=True, cls="cf-props"))
         elif t == "table":
             wide = "cf-wide" if len(b[1]) > 8 else ""
             out.append(h_table(b[1], b[2], cls=wide))
         elif t == "expand":
-            out.append(f'<details class="cf-expand" open><summary>{h_esc(b[1])}</summary>{h_blocks(b[2])}</details>')
+            out.append(f'<div class="cf-expand" data-node-type="expand" data-title="{h_esc(b[1])}">{h_blocks(b[2])}</div>')
         elif t == "code":
             out.append(f'<pre class="cf-code"><code>{h_esc(b[1])}</code></pre>')
+        elif t == "alt":
+            out.append(h_blocks(b[2]))
     return "\n".join(out)
 
 

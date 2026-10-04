@@ -18,7 +18,7 @@ Last Review (Date / By) · Comments.
 
 ## Files
 
-- `mbss-confluence-kit.html`: preview of every page, with copy buttons for each format
+- `mbss-confluence-kit.html`: open in a browser, pick a page, press **Copy page** and paste into the Confluence page body. Wiki markup and storage format copies are there too.
 - `output/wiki/*.txt`: Confluence wiki markup (Insert › Markup › Confluence wiki)
 - `output/storage/*.xml`: Confluence storage format (source editor or REST API `body.storage`)
 - `pages.py`: page content (edit here)

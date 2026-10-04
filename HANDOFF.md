@@ -36,7 +36,7 @@ Each rule has to show its name, description, the **current check in the Network 
    - Automation: AUTOMATED (Green), PARTIAL (Yellow), MANUAL (Blue), PLANNED (Purple), NOT FEASIBLE (Grey)
    - Exceptions: ACTIVE, EXPIRING, EXPIRED, CLOSED. Backlog: NOT STARTED, IN PROGRESS, DONE
 6. **When the tool's check changes:** move the text from Current Check to Old Check, write the new logic in Current Check, record the reason and date in Comments, and update Last Review.
-7. **Platform pages** start with a Page Properties table (versions in scope, rule counts, coverage, owner, review dates). The parent page's **Page Properties Report** reads those tables through the label `mbss-platform`.
+7. **Platform pages** start with a Page Properties table (a plain summary table in the Copy page output) (versions in scope, rule counts, coverage, owner, review dates). The parent page's **Page Properties Report** reads those tables through the label `mbss-platform`.
 8. **Each platform page contains:** a "how to maintain" panel, scope notes, the Rule Register (one EXAMPLE row plus two blank rows), an optional per-rule details expand (pass/fail logic, remediation, review history), a known-limitations table and a change log.
 9. **Parent page contains:** document control, scope, status legends, coverage dashboard, cross-vendor control matrix, Rule ID convention, review process, change log and references.
 
@@ -58,7 +58,7 @@ Don't hand-edit anything under `output/` or `mbss-confluence-kit.html`. It is ov
 
 | Confluence | Use | Result |
 |---|---|---|
-| Cloud | "Copy for Confluence Cloud" button in the kit (rich HTML) | Headings, tables, lists and code come across. Status values arrive as plain text. Grey `[Insert … macro]` lines mark where to add `/toc`, `/page properties` and the report macro. |
+| Cloud | **Copy page** button in the kit (rich HTML), pasted into the page body | A finished page with nothing to add. Status lozenges, panels and expands carry the `data-*` attributes that the Cloud editor's paste parser turns into real elements. Macros that can't be pasted are left out (TOC) or replaced by plain tables (Page Properties, plus a manually updated coverage table instead of the report). |
 | Data Center / Server | `output/wiki/*.txt` via Insert (+) › Markup › Confluence wiki | Status, panel, expand and Page Properties macros come through. |
 | Either, via source editor or REST API | `output/storage/*.xml` as `body.storage` | Exact, with every macro. |
 
@@ -66,8 +66,8 @@ Don't hand-edit anything under `output/` or `mbss-confluence-kit.html`. It is ov
 
 - Lives in the public repo https://github.com/jahithoque/network-mbss (branch `main`). It was originally written in a private research repo; only this project was carried over, without that repo's history.
 - Kit published privately as a claude.ai artifact: https://claude.ai/artifact/NPnYKXvxmwBeJdotfbjj8B
-- **Verified:** all storage-format files parse as well-formed XML. The kit page has no horizontal scroll at 1400px or 400px, in light or dark mode.
-- **Not verified:** nothing has been pasted into a real Confluence yet. The riskiest part is `{status:…|title=…}` macros inside wiki markup table cells, so test one page first.
+- **Verified:** all storage-format files parse as well-formed XML. The Copy page HTML for all seven pages parses with Atlassian's editor schema (`@atlaskit/adf-schema` 57.6, `defaultSchema`) with every status, panel, expand, table and code block recognised and no text lost. The kit page has no horizontal scroll at 1400px or 400px, in light or dark mode.
+- **Not verified:** nothing has been pasted into a real Confluence yet. The schema test doesn't cover the Cloud editor's own paste handling, so paste one platform page first and check that the lozenges are coloured. If they come through as plain text, everything else still pastes. On Data Center, the riskiest part is `{status:…|title=…}` macros inside wiki markup table cells.
 - **Placeholders:** example rows, CLI snippets and remediation commands are illustrative. Check them against the OS versions in scope. Suggested fix times per severity are marked "e.g." and should follow internal policy.
 
 ## Possible next steps (offered, not started)
