@@ -2,7 +2,8 @@
 
 Confluence page templates for Minimum Baseline Security Standards (MBSS) on network devices: Check Point firewalls, Symantec BlueCoat ProxySG, F5 BIG-IP and Cisco IOS / IOS-XE.
 
-- [`confluence-template/`](confluence-template/): page content, the build script and the generated outputs (see its README)
+- **[`confluence-template/output/markdown/`](confluence-template/output/markdown/): start here.** One Markdown file per Confluence page, with page titles and Windows paste steps
+- [`confluence-template/`](confluence-template/): page content, the build script and the other generated outputs (see its README)
 - [`HANDOFF.md`](HANDOFF.md): design decisions, current state and next steps
 
 ```bash

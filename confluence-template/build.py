@@ -2,6 +2,7 @@
 
   output/storage/<slug>.xml  Confluence storage format (source editor / REST API)
   output/wiki/<slug>.txt     Confluence wiki markup (Insert > Markup)
+  output/markdown/<slug>.md  Markdown (open on GitHub, copy the rendered page, paste)
   mbss-confluence-kit.html   Preview page with copy buttons for all formats
 
 Run: python3 build.py
@@ -268,22 +269,142 @@ def h_blocks(blocks, mode):
     return "\n".join(out)
 
 
+# ------------------------------------------------------------ Markdown
+#
+# Same choices as the Cloud copy: no TOC, Page Properties as a plain table, the
+# hand-updated coverage table instead of the report. Status values become plain
+# text, panels become quotes and expands become ### sections.
+
+M_SPECIAL = re.compile(r"([\\`*_\[\]<>|])")
+
+
+def m_esc(s):
+    return M_SPECIAL.sub(r"\\\1", s)
+
+
+def m_inline(x):
+    out = ""
+    for i in as_inlines(x):
+        if isinstance(i, str):
+            out += m_esc(i)
+        elif i[0] == "b":
+            out += w_wrap("**", m_esc(i[1]), "**")
+        elif i[0] == "i":
+            out += w_wrap("*", m_esc(i[1]), "*")
+        elif i[0] == "code":
+            out += "`" + i[1].replace("|", "\\|") + "`"
+        elif i[0] == "st":
+            out += i[2]
+        elif i[0] == "ph":
+            out += f"*\\[{m_esc(i[1])}\\]*"
+        elif i[0] == "br":
+            out += " — "
+    return out.strip() or " "
+
+
+def m_table(headers, rows, header_col=False):
+    if not headers:
+        headers = ["Property", "Value"]
+    lines = ["| " + " | ".join(m_inline(h) for h in headers) + " |",
+             "|" + "|".join("---" for _ in headers) + "|"]
+    for row in rows:
+        cells = [m_inline(c) for c in row]
+        if header_col:
+            cells[0] = f"**{cells[0]}**"
+        lines.append("| " + " | ".join(cells) + " |")
+    return "\n".join(lines)
+
+
+def m_blocks(blocks):
+    out = []
+    for b in blocks:
+        t = b[0]
+        if t == "h":
+            out.append("#" * b[1] + " " + b[2])
+        elif t == "p":
+            out.append(m_inline(b[1]))
+        elif t == "ul":
+            out.append("\n".join("- " + m_inline(i) for i in b[1]))
+        elif t == "panel":
+            body = f"**{m_esc(b[2])}**\n\n" + m_blocks(b[3])
+            out.append("\n".join(("> " + line).rstrip() for line in body.split("\n")))
+        elif t == "props":
+            out.append(m_table(None, b[2], header_col=True))
+        elif t == "table":
+            out.append(m_table(b[1], b[2]))
+        elif t == "expand":
+            out.append("### " + b[1] + "\n\n" + m_blocks(b[2]))
+        elif t == "code":
+            out.append("```\n" + b[1] + "\n```")
+        elif t == "alt":
+            out.append(m_blocks(b[2]))
+    return "\n\n".join(out)
+
+
+MD_INDEX_HEAD = """# MBSS pages as Markdown
+
+One file per Confluence page. Create them in this order, with these titles:
+
+| # | File | Confluence page title | Parent page | Labels |
+|---|---|---|---|---|
+"""
+
+MD_INDEX_TAIL = """
+
+## Pasting into Confluence Data Center (Windows)
+
+**Recommended: copy the formatted page from GitHub**
+
+1. Open the page's `.md` file on GitHub. It shows formatted, with real tables.
+2. Click inside the formatted text, press `Ctrl+A` to select it, then `Ctrl+C` to copy.
+3. In Confluence, create the page, type the title from the table above, click in the body and press `Ctrl+V`.
+
+Headings, tables, lists, bold text and code paste as normal Confluence formatting.
+
+**Alternative: Insert › Markup › Markdown**
+
+Open the file in Notepad, `Ctrl+A`, `Ctrl+C`. In the Confluence editor press `Ctrl+Shift+D`, choose **Markdown**, paste, and check the preview before pressing Insert. Confluence Data Center doesn't always turn Markdown tables into real tables, so if the preview shows jumbled text, use the GitHub route instead.
+
+## What Markdown can't carry
+
+Markdown has no Confluence macros, so these pages use plain equivalents:
+
+- Severity and automation status (HIGH, AUTOMATED, …) are plain text. To get coloured lozenges, type `/status` in a cell or use the `output/wiki` files.
+- "How to maintain this page" is a quote block instead of an info panel.
+- Rule details is a normal section instead of an expand.
+- The summary at the top of each platform page is a plain table, and the overview's coverage dashboard is a table you update by hand. The `output/wiki` files keep the Page Properties macros and the self-updating report.
+
+Don't edit these files by hand. They are regenerated from `pages.py` by `python3 confluence-template/build.py`.
+"""
+
+
+def m_index(pages):
+    rows = [
+        f"| {n} | [{p['slug']}.md]({p['slug']}.md) | {p['title']} | {p['parent'] or '(top level)'} | `{p['label']}` |"
+        for n, p in enumerate(pages, 1)
+    ]
+    return MD_INDEX_HEAD + "\n".join(rows) + MD_INDEX_TAIL
+
+
 # ------------------------------------------------------------ main
 
 def main():
     pages = all_pages()
     (HERE / "output/storage").mkdir(parents=True, exist_ok=True)
     (HERE / "output/wiki").mkdir(parents=True, exist_ok=True)
+    (HERE / "output/markdown").mkdir(parents=True, exist_ok=True)
     kit = []
     for pg in pages:
         storage = s_blocks(pg["blocks"])
         wiki = w_blocks(pg["blocks"])
         (HERE / f"output/storage/{pg['slug']}.xml").write_text(storage + "\n", encoding="utf-8")
         (HERE / f"output/wiki/{pg['slug']}.txt").write_text(wiki + "\n", encoding="utf-8")
+        (HERE / f"output/markdown/{pg['slug']}.md").write_text(m_blocks(pg["blocks"]) + "\n", encoding="utf-8")
         kit.append({k: pg[k] for k in ("slug", "title", "tab", "parent", "label")}
                    | {"preview": h_blocks(pg["blocks"], "preview"), "cloud": h_blocks(pg["blocks"], "cloud"),
                       "wiki": wiki, "storage": storage})
 
+    (HERE / "output/markdown/README.md").write_text(m_index(pages), encoding="utf-8")
     data = json.dumps(kit, ensure_ascii=False).replace("</", "<\\/")
     template = (HERE / "kit_template.html").read_text(encoding="utf-8")
     (HERE / "mbss-confluence-kit.html").write_text(template.replace("__KIT_DATA__", data), encoding="utf-8")

@@ -48,6 +48,7 @@ Each rule has to show its name, description, the **current check in the Network 
 | `build.py` | Renders `pages.py` into the three outputs below. Run `python3 build.py`; it needs only the Python 3 standard library. |
 | `kit_template.html` | Template for the preview kit. `build.py` injects the page data into it. |
 | `mbss-confluence-kit.html` | Generated preview of all seven pages, with copy buttons. Open it in a browser. |
+| `output/markdown/*.md` | Markdown, one file per page, plus a README index (titles, parents, labels, paste steps). **What the user asked to use.** |
 | `output/wiki/*.txt` | Confluence wiki markup, one file per page |
 | `output/storage/*.xml` | Confluence storage format, one file per page |
 | `README.md` | Short file overview |
@@ -56,11 +57,12 @@ Don't hand-edit anything under `output/` or `mbss-confluence-kit.html`. It is ov
 
 ## Which output to paste where
 
-**The user's Confluence is Data Center**, so wiki markup is the main route.
+**The user's Confluence is Data Center, used from Windows, and they asked for Markdown files to copy and paste.**
 
 | Confluence | Use | Result |
 |---|---|---|
-| **Data Center** (ours) | **Copy page** in the kit (wiki markup). In the page body press Ctrl+Shift+D (Insert › Markup), keep "Confluence wiki", paste, Insert | Every macro comes through: status, panels, expands, TOC, Page Properties and the Page Properties Report. The Markup dialog previews the result before inserting. |
+| **Data Center** (chosen) | `output/markdown/*.md`: open on GitHub, select the formatted page, copy, paste into the editor | Headings, tables, lists and code. No macros: status values are plain text, panels are quotes, expands are sections. Insert › Markup › Markdown is the fallback, but Data Center is reported to garble Markdown tables there. |
+| Data Center, with macros | **Copy page** in the kit (wiki markup). In the page body press Ctrl+Shift+D (Insert › Markup), keep "Confluence wiki", paste, Insert | Every macro comes through: status, panels, expands, TOC, Page Properties and the Page Properties Report. The Markup dialog previews the result before inserting. |
 | Cloud | **Copy for Confluence Cloud** (rich HTML), pasted into the page body | Status lozenges, panels and expands carry the `data-*` attributes the Cloud editor's paste parser turns into real elements. TOC is left out, Page Properties becomes a plain table and the report becomes a hand-updated coverage table (the `alt` block in `pages.py`). |
 | Either, via source editor or REST API | `output/storage/*.xml` as `body.storage` | Exact, with every macro. |
 
