@@ -19,7 +19,7 @@ Last Review (Date / By) · Comments.
 ## Files
 
 - `mbss-confluence-kit.html`: open in a browser, pick a page, press **Copy page**, then in Confluence Data Center press Ctrl+Shift+D (Insert › Markup) in the page body and paste. A Cloud copy and the storage format are there too.
-- `output/markdown/*.md`: Markdown, one file per page. Its README lists page titles and how to paste on Windows
+- `output/network-mbss-confluence.md`: all pages in one Markdown file, with page titles and how to paste on Windows at the top
 - `output/wiki/*.txt`: Confluence wiki markup (Insert › Markup › Confluence wiki)
 - `output/storage/*.xml`: Confluence storage format (source editor or REST API `body.storage`)
 - `pages.py`: page content (edit here)

@@ -2,7 +2,7 @@
 
   output/storage/<slug>.xml  Confluence storage format (source editor / REST API)
   output/wiki/<slug>.txt     Confluence wiki markup (Insert > Markup)
-  output/markdown/<slug>.md  Markdown (open on GitHub, copy the rendered page, paste)
+  output/network-mbss-confluence.md  All pages as one Markdown file
   mbss-confluence-kit.html   Preview page with copy buttons for all formats
 
 Run: python3 build.py
@@ -341,49 +341,41 @@ def m_blocks(blocks):
     return "\n\n".join(out)
 
 
-MD_INDEX_HEAD = """# MBSS pages as Markdown
+MD_INTRO = """# Network MBSS – Confluence pages
 
-One file per Confluence page. Create them in this order, with these titles:
+All seven Confluence pages in one file. Each page starts with a heading that is its page title.
 
-| # | File | Confluence page title | Parent page | Labels |
-|---|---|---|---|---|
-"""
+## How to paste a page into Confluence Data Center (Windows)
 
-MD_INDEX_TAIL = """
+1. Open this file on GitHub, where it shows formatted with real tables.
+2. In Confluence, create the page and type its title from the table below. Create **Network MBSS** first and the others as its children.
+3. Back on GitHub, select from the line under the page's title down to the end of that page (just above the next page's title), and press `Ctrl+C`.
+4. Click in the Confluence page body and press `Ctrl+V`.
+5. Add the labels from the table below.
 
-## Pasting into Confluence Data Center (Windows)
+You can also paste the raw Markdown through Insert › Markup › Markdown (`Ctrl+Shift+D`), but Confluence Data Center doesn't always turn Markdown tables into real tables, so check the preview first.
 
-**Recommended: copy the formatted page from GitHub**
+Markdown has no Confluence macros. Status values (HIGH, AUTOMATED, …) are plain text (type `/status` in a cell for a coloured lozenge), the maintenance notes are a quote block, Rule details is a normal section, and the coverage dashboard on the overview is a table you update by hand.
 
-1. Open the page's `.md` file on GitHub. It shows formatted, with real tables.
-2. Click inside the formatted text, press `Ctrl+A` to select it, then `Ctrl+C` to copy.
-3. In Confluence, create the page, type the title from the table above, click in the body and press `Ctrl+V`.
+## Pages
 
-Headings, tables, lists, bold text and code paste as normal Confluence formatting.
-
-**Alternative: Insert › Markup › Markdown**
-
-Open the file in Notepad, `Ctrl+A`, `Ctrl+C`. In the Confluence editor press `Ctrl+Shift+D`, choose **Markdown**, paste, and check the preview before pressing Insert. Confluence Data Center doesn't always turn Markdown tables into real tables, so if the preview shows jumbled text, use the GitHub route instead.
-
-## What Markdown can't carry
-
-Markdown has no Confluence macros, so these pages use plain equivalents:
-
-- Severity and automation status (HIGH, AUTOMATED, …) are plain text. To get coloured lozenges, type `/status` in a cell or use the `output/wiki` files.
-- "How to maintain this page" is a quote block instead of an info panel.
-- Rule details is a normal section instead of an expand.
-- The summary at the top of each platform page is a plain table, and the overview's coverage dashboard is a table you update by hand. The `output/wiki` files keep the Page Properties macros and the self-updating report.
-
-Don't edit these files by hand. They are regenerated from `pages.py` by `python3 confluence-template/build.py`.
+| # | Page title | Parent page | Labels |
+|---|---|---|---|
 """
 
 
-def m_index(pages):
+def gh_anchor(title):
+    # GitHub heading anchors: lowercase, drop punctuation, spaces to hyphens.
+    return re.sub(r"[^\w\- ]", "", title.lower()).replace(" ", "-")
+
+
+def m_document(pages):
     rows = [
-        f"| {n} | [{p['slug']}.md]({p['slug']}.md) | {p['title']} | {p['parent'] or '(top level)'} | `{p['label']}` |"
+        f"| {n} | [{p['title']}](#{gh_anchor(p['title'])}) | {p['parent'] or '(top level)'} | `{p['label']}` |"
         for n, p in enumerate(pages, 1)
     ]
-    return MD_INDEX_HEAD + "\n".join(rows) + MD_INDEX_TAIL
+    body = [f"---\n\n# {p['title']}\n\n{m_blocks(p['blocks'])}" for p in pages]
+    return MD_INTRO + "\n".join(rows) + "\n\n" + "\n\n".join(body) + "\n"
 
 
 # ------------------------------------------------------------ main
@@ -392,19 +384,17 @@ def main():
     pages = all_pages()
     (HERE / "output/storage").mkdir(parents=True, exist_ok=True)
     (HERE / "output/wiki").mkdir(parents=True, exist_ok=True)
-    (HERE / "output/markdown").mkdir(parents=True, exist_ok=True)
     kit = []
     for pg in pages:
         storage = s_blocks(pg["blocks"])
         wiki = w_blocks(pg["blocks"])
         (HERE / f"output/storage/{pg['slug']}.xml").write_text(storage + "\n", encoding="utf-8")
         (HERE / f"output/wiki/{pg['slug']}.txt").write_text(wiki + "\n", encoding="utf-8")
-        (HERE / f"output/markdown/{pg['slug']}.md").write_text(m_blocks(pg["blocks"]) + "\n", encoding="utf-8")
         kit.append({k: pg[k] for k in ("slug", "title", "tab", "parent", "label")}
                    | {"preview": h_blocks(pg["blocks"], "preview"), "cloud": h_blocks(pg["blocks"], "cloud"),
                       "wiki": wiki, "storage": storage})
 
-    (HERE / "output/markdown/README.md").write_text(m_index(pages), encoding="utf-8")
+    (HERE / "output/network-mbss-confluence.md").write_text(m_document(pages), encoding="utf-8")
     data = json.dumps(kit, ensure_ascii=False).replace("</", "<\\/")
     template = (HERE / "kit_template.html").read_text(encoding="utf-8")
     (HERE / "mbss-confluence-kit.html").write_text(template.replace("__KIT_DATA__", data), encoding="utf-8")
