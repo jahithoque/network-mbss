@@ -36,7 +36,7 @@ Each rule has to show its name, description, the **current check in the Network 
    - Automation: AUTOMATED (Green), PARTIAL (Yellow), MANUAL (Blue), PLANNED (Purple), NOT FEASIBLE (Grey)
    - Exceptions: ACTIVE, EXPIRING, EXPIRED, CLOSED. Backlog: NOT STARTED, IN PROGRESS, DONE
 6. **When the tool's check changes:** move the text from Current Check to Old Check, write the new logic in Current Check, record the reason and date in Comments, and update Last Review.
-7. **Platform pages** start with a Page Properties table (a plain summary table in the Copy page output) (versions in scope, rule counts, coverage, owner, review dates). The parent page's **Page Properties Report** reads those tables through the label `mbss-platform`.
+7. **Platform pages** start with a Page Properties table (a plain summary table in the Cloud copy) (versions in scope, rule counts, coverage, owner, review dates). The parent page's **Page Properties Report** reads those tables through the label `mbss-platform`.
 8. **Each platform page contains:** a "how to maintain" panel, scope notes, the Rule Register (one EXAMPLE row plus two blank rows), an optional per-rule details expand (pass/fail logic, remediation, review history), a known-limitations table and a change log.
 9. **Parent page contains:** document control, scope, status legends, coverage dashboard, cross-vendor control matrix, Rule ID convention, review process, change log and references.
 
@@ -56,18 +56,22 @@ Don't hand-edit anything under `output/` or `mbss-confluence-kit.html`. It is ov
 
 ## Which output to paste where
 
+**The user's Confluence is Data Center**, so wiki markup is the main route.
+
 | Confluence | Use | Result |
 |---|---|---|
-| Cloud | **Copy page** button in the kit (rich HTML), pasted into the page body | A finished page with nothing to add. Status lozenges, panels and expands carry the `data-*` attributes that the Cloud editor's paste parser turns into real elements. Macros that can't be pasted are left out (TOC) or replaced by plain tables (Page Properties, plus a manually updated coverage table instead of the report). |
-| Data Center / Server | `output/wiki/*.txt` via Insert (+) › Markup › Confluence wiki | Status, panel, expand and Page Properties macros come through. |
+| **Data Center** (ours) | **Copy page** in the kit (wiki markup). In the page body press Ctrl+Shift+D (Insert › Markup), keep "Confluence wiki", paste, Insert | Every macro comes through: status, panels, expands, TOC, Page Properties and the Page Properties Report. The Markup dialog previews the result before inserting. |
+| Cloud | **Copy for Confluence Cloud** (rich HTML), pasted into the page body | Status lozenges, panels and expands carry the `data-*` attributes the Cloud editor's paste parser turns into real elements. TOC is left out, Page Properties becomes a plain table and the report becomes a hand-updated coverage table (the `alt` block in `pages.py`). |
 | Either, via source editor or REST API | `output/storage/*.xml` as `body.storage` | Exact, with every macro. |
+
+Wiki markup gotchas handled in `build.py`: bold/italic markers can't sit next to a space (`*Label: *` renders literally), and text like `(x)` or `:)` becomes an emoticon, so it is escaped.
 
 ## State at handoff
 
 - Lives in the public repo https://github.com/jahithoque/network-mbss (branch `main`). It was originally written in a private research repo; only this project was carried over, without that repo's history.
 - Kit published privately as a claude.ai artifact: https://claude.ai/artifact/NPnYKXvxmwBeJdotfbjj8B
 - **Verified:** all storage-format files parse as well-formed XML. The Copy page HTML for all seven pages parses with Atlassian's editor schema (`@atlaskit/adf-schema` 57.6, `defaultSchema`) with every status, panel, expand, table and code block recognised and no text lost. The kit page has no horizontal scroll at 1400px or 400px, in light or dark mode.
-- **Not verified:** nothing has been pasted into a real Confluence yet. The schema test doesn't cover the Cloud editor's own paste handling, so paste one platform page first and check that the lozenges are coloured. If they come through as plain text, everything else still pastes. On Data Center, the riskiest part is `{status:…|title=…}` macros inside wiki markup table cells.
+- **Not verified:** nothing has been pasted into a real Confluence yet. On Data Center, the riskiest part is the `{status:colour=…|title=…}` macros inside wiki markup table cells, because the `|` in the macro is also the table cell separator. Paste one platform page first and check the Markup dialog preview: the Rule Register should have 11 columns with coloured lozenges.
 - **Placeholders:** example rows, CLI snippets and remediation commands are illustrative. Check them against the OS versions in scope. Suggested fix times per severity are marked "e.g." and should follow internal policy.
 
 ## Possible next steps (offered, not started)

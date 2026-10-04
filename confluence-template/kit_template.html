@@ -151,6 +151,11 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
 .cf-panel-tip { background: var(--pn-tip-bg); border-color: var(--pn-tip-line); }
 .cf-panel-warning { background: var(--pn-warning-bg); border-color: var(--pn-warning-line); }
 .cf-expand { border: 1px solid var(--line); border-radius: 5px; padding: 6px 14px 10px; margin: 10px 0; }
+.paper .cf-macro { max-width: none; font: 500 12px/1.5 var(--f-mono); color: var(--muted); background: var(--sunken); border: 1px dashed var(--line-strong); border-radius: 4px; padding: 6px 10px; }
+.cf-macrobox { border: 1px dashed var(--line-strong); border-radius: 5px; padding: 4px 12px 2px; margin: 10px 0; }
+.cf-macrolabel { margin: 4px 0 0 !important; font: 500 12px/1.5 var(--f-mono); color: var(--muted); }
+.steps { margin: 2px 0 4px; padding-left: 20px; color: var(--muted); font-size: 13.5px; display: grid; gap: 3px; }
+kbd { font: 500 11.5px/1 var(--f-mono); padding: 2px 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); color: var(--ink); white-space: nowrap; }
 .cf-expand::before { content: "▾ " attr(data-title); display: block; font-weight: 600; padding: 4px 0; color: var(--accent); }
 .cf-code { background: var(--sunken); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; overflow-x: auto; font: 400 12.5px/1.5 var(--f-mono); }
 .paper .cf-code code { background: none; border: 0; padding: 0; font-size: inherit; }
@@ -171,24 +176,29 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
   <header class="top">
     <p class="eyebrow">Network MBSS · Confluence templates</p>
     <h1>MBSS page templates</h1>
-    <p class="lede">Seven pages: an overview, one page per platform (Check Point, BlueCoat, F5, Cisco IOS), an exceptions register and an automation backlog. Pick a page, press <strong>Copy page</strong>, create the page in Confluence and paste into its body. Then type your rules into the Rule Register.</p>
+    <p class="lede">Seven pages: an overview, one page per platform (Check Point, BlueCoat, F5, Cisco IOS), an exceptions register and an automation backlog. Pick a page, press <strong>Copy page</strong>, and paste it into Confluence through Insert › Markup (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>). Then type your rules into the Rule Register.</p>
   </header>
 
-  <section class="routes" aria-label="Which copy option to use">
+  <section class="routes" aria-label="How to paste a page">
     <div class="route">
-      <h2>Confluence Cloud</h2>
+      <h2>Confluence Data Center</h2>
       <span class="btnname">Copy page</span>
-      <p>Paste straight into the page body with Ctrl+V (⌘V on Mac). Coloured status lozenges, info panels, expands, tables and code blocks paste as real Confluence elements. Nothing needs adding afterwards.</p>
+      <ol class="steps">
+        <li>Create the page and paste its title (<em>Copy title</em>).</li>
+        <li>Click in the body and press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd>, or + › Markup.</li>
+        <li>Leave <em>Confluence wiki</em> selected, paste, check the preview on the right, press Insert.</li>
+      </ol>
+      <p>Status lozenges, panels, expands, Page Properties and the coverage report all arrive as real macros.</p>
     </div>
     <div class="route">
-      <h2>Data Center / Server</h2>
-      <span class="btnname">Copy wiki markup</span>
-      <p>In the editor, open Insert (+) › Markup, choose Confluence wiki, and paste. Status lozenges, panels, expands and Page Properties come through as real macros. Use this on Cloud too if your editor offers Insert › Markup.</p>
+      <h2>Confluence Cloud</h2>
+      <span class="btnname">Copy for Confluence Cloud</span>
+      <p>Paste straight into the page body. Lozenges, panels and expands paste as real elements. Page Properties becomes a plain table and the coverage dashboard is a table you update by hand.</p>
     </div>
     <div class="route">
       <h2>Source editor or REST API</h2>
       <span class="btnname">Copy storage format</span>
-      <p>The most exact option. Paste into the source editor (Data Center, or the Source Editor app on Cloud), or send it as <code>body.storage</code> when you create the page through the REST API.</p>
+      <p>The exact page with every macro, for the source editor (if your admins have installed one) or <code>body.storage</code> in a REST API call.</p>
     </div>
   </section>
 
@@ -206,9 +216,9 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
           <p class="labels" id="labels"></p>
         </div>
         <div class="actions">
-          <button class="btn primary" id="copy-rich" type="button">Copy page</button>
+          <button class="btn primary" id="copy-wiki" type="button">Copy page</button>
           <button class="btn" id="copy-title" type="button">Copy title</button>
-          <button class="btn" id="copy-wiki" type="button">Copy wiki markup</button>
+          <button class="btn" id="copy-rich" type="button">Copy for Confluence Cloud</button>
           <button class="btn" id="copy-storage" type="button">Copy storage format</button>
         </div>
       </div>
@@ -233,10 +243,9 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
     <h2>After pasting</h2>
     <ol>
       <li>Create <strong>Network MBSS</strong> first, then create the other six pages as its children, using the page titles shown above.</li>
-      <li>Paste the title into the title field and the copied page into the body. Each page is self-contained.</li>
-      <li>Optional: add the labels shown under each title, so the pages are easy to find by search.</li>
+      <li>Add the labels shown under each title. The coverage dashboard on the overview lists every page labelled <code>mbss-platform</code>, so platform pages without that label won't appear.</li>
       <li>Delete the row marked <em>EXAMPLE – delete</em> once your first real rule is in. To add a row, press Tab in the last cell of the table.</li>
-      <li>After you load the rules, update Total rules, Automated rules and Automation coverage in the summary table at the top of the platform page, and copy them into the Coverage dashboard on the overview page.</li>
+      <li>After you load the rules, update Total rules, Automated rules and Automation coverage in the Page Properties table at the top of the platform page. The dashboard picks them up automatically.</li>
       <li>The remediation snippets in Rule details are example syntax. Check them against your OS versions before anyone uses them.</li>
     </ol>
   </section>
@@ -290,7 +299,7 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
       c.textContent = l;
       labels.appendChild(c);
     });
-    $("view-preview").innerHTML = p.html;
+    $("view-preview").innerHTML = p.preview;
     $("src-wiki").value = p.wiki;
     $("src-storage").value = p.storage;
     document.querySelectorAll(".tree button").forEach(function (b) {
@@ -350,15 +359,15 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
 
   $("copy-rich").addEventListener("click", function () {
     var p = pages[cur];
-    var done = function () { toast("Copied. In Confluence, create a page titled “" + p.title + "” and paste into the body."); };
+    var done = function () { toast("Copied for Confluence Cloud. Paste into the body of “" + p.title + "”."); };
     var fallback = function () {
-      if (execCopyHtml(p.html)) done();
+      if (execCopyHtml(p.cloud)) done();
       else { selectPreview(); toast(manual); }
     };
     try {
       if (!navigator.clipboard || !window.ClipboardItem) throw new Error("no clipboard");
       navigator.clipboard.write([new ClipboardItem({
-        "text/html": new Blob([p.html], { type: "text/html" }),
+        "text/html": new Blob([p.cloud], { type: "text/html" }),
         "text/plain": new Blob([p.wiki], { type: "text/plain" })
       })]).then(done, fallback);
     } catch (e) { fallback(); }
@@ -366,7 +375,11 @@ textarea.src { width: 100%; min-height: 62vh; resize: vertical; padding: 14px 16
 
   function copySource(kind, label) {
     var text = pages[cur][kind];
-    var done = function () { toast("Copied the " + label + " for “" + pages[cur].title + "”."); };
+    var done = function () {
+      toast(kind === "wiki"
+        ? "Copied “" + pages[cur].title + "”. In the page body press Ctrl+Shift+D, paste, then Insert."
+        : "Copied the " + label + " for “" + pages[cur].title + "”.");
+    };
     var fallback = function () {
       show(kind);
       var ta = $("src-" + kind);

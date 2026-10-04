@@ -20,9 +20,9 @@ h2. Scope
 |Firewall|Check Point Security Gateways & Security Management (Gaia OS)|_\[e.g., R81.20, R82\]_|_\[count\]_|MBSS – Firewall – Check Point|_\[Team\]_|
 |Proxy|Symantec BlueCoat ProxySG / Edge SWG (SGOS)|_\[e.g., SGOS 7.3.x\]_|_\[count\]_|MBSS – Proxy – BlueCoat ProxySG|_\[Team\]_|
 |Load Balancer|F5 BIG-IP (LTM / GTM / ASM / APM) on TMOS|_\[e.g., 15.1.x, 17.1.x\]_|_\[count\]_|MBSS – Load Balancer – F5 BIG-IP|_\[Team\]_|
-|Routers & Switches|Cisco IOS and IOS-XE routers and switches|_\[e.g., IOS 15.2(x), IOS-XE 17.x\]_|_\[count\]_|MBSS – Routers & Switches – Cisco IOS|_\[Team\]_|
+|Routers & Switches|Cisco IOS and IOS-XE routers and switches|_\[e.g., IOS 15.2\(x), IOS-XE 17.x\]_|_\[count\]_|MBSS – Routers & Switches – Cisco IOS|_\[Team\]_|
 
-*Out of scope: *_\[List excluded device types, lab devices, etc.\]_
+*Out of scope:* _\[List excluded device types, lab devices, etc.\]_
 
 h2. How to read this standard
 
@@ -94,10 +94,10 @@ Format: {{<PREFIX>-<DOMAIN>-<NNN>}}, for example {{CSCO-MGMT-001}}. Prefixes: {{
 
 h2. Review process
 
-* *Scheduled review: *_\[quarterly\]_. Update Last Review on every rule you review, even if nothing changed.
-* *Also review after: *a major OS upgrade, a new CIS Benchmark release, a change to the automation tool's check logic, or an audit finding.
-* *When a check changes: *copy Current Check into Old Check, write the new logic in Current Check, and give the reason and date in Comments.
-* *Exceptions *go in MBSS – Exceptions & Waivers Register, not in the rule tables.
+* *Scheduled review:* _\[quarterly\]_. Update Last Review on every rule you review, even if nothing changed.
+* *Also review after:* a major OS upgrade, a new CIS Benchmark release, a change to the automation tool's check logic, or an audit finding.
+* *When a check changes:* copy Current Check into Old Check, write the new logic in Current Check, and give the reason and date in Comments.
+* *Exceptions* go in MBSS – Exceptions & Waivers Register, not in the rule tables.
 
 h2. Change log
 

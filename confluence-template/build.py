@@ -10,6 +10,7 @@ Run: python3 build.py
 import html
 import json
 import pathlib
+import re
 
 from pages import all_pages
 
@@ -101,10 +102,23 @@ def s_blocks(blocks):
 
 # ------------------------------------------------------------ wiki markup
 
+# Text the wiki renderer would turn into an emoticon, e.g. "15.2(x)" -> red cross.
+W_EMOTICON = re.compile(r"\((x|i|/|!|\?|y|n|on|off|\*[rgby]?|-|\+)\)|[:;]-?[()PDp]")
+
+
 def w_esc(s):
     for ch in "[]{}|":
         s = s.replace(ch, "\\" + ch)
-    return s
+    return W_EMOTICON.sub(lambda m: "\\" + m.group(0), s)
+
+
+def w_wrap(open_, text, close):
+    # *bold *, _italic _ etc. don't render if the marker sits next to a space,
+    # so keep leading/trailing spaces outside the markers.
+    core = text.strip()
+    lead = text[:len(text) - len(text.lstrip())]
+    trail = text[len(text.rstrip()):]
+    return lead + open_ + core + close + trail if core else text
 
 
 def w_inline(x):
@@ -113,11 +127,11 @@ def w_inline(x):
         if isinstance(i, str):
             out += w_esc(i)
         elif i[0] == "b":
-            out += f"*{w_esc(i[1])}*"
+            out += w_wrap("*", w_esc(i[1]), "*")
         elif i[0] == "i":
-            out += f"_{w_esc(i[1])}_"
+            out += w_wrap("_", w_esc(i[1]), "_")
         elif i[0] == "code":
-            out += "{{" + w_esc(i[1]) + "}}"
+            out += w_wrap("{{", w_esc(i[1]), "}}")
         elif i[0] == "st":
             out += "{status:colour=%s|title=%s}" % (i[1], i[2])
         elif i[0] == "ph":
@@ -168,13 +182,15 @@ def w_blocks(blocks):
     return "\n\n".join(out)
 
 
-# ------------------------------------------------------------ HTML (preview + rich copy)
+# ------------------------------------------------------------ HTML (preview + Cloud copy)
 #
-# This HTML is what "Copy page" puts on the clipboard. Status lozenges, panels
-# and expands carry the data attributes the Confluence Cloud editor's paste
-# parser (@atlaskit/adf-schema parseDOM rules) turns back into real elements.
-# Macros that can't be pasted (TOC, Page Properties, the report) are left out
-# or replaced by plain tables, so a pasted page needs no follow-up.
+# mode="preview": the kit's preview of the wiki / storage version, with macros
+# drawn as labelled boxes.
+# mode="cloud": what "Copy for Confluence Cloud" puts on the clipboard. Status
+# lozenges, panels and expands carry the data attributes the Cloud editor's
+# paste parser (@atlaskit/adf-schema parseDOM rules) turns back into real
+# elements. Macros that can't be pasted (TOC, Page Properties, the report) are
+# left out or replaced by plain tables, so a pasted page needs no follow-up.
 
 ADF_COLOUR = {"Grey": "neutral", "Red": "red", "Yellow": "yellow",
               "Green": "green", "Blue": "blue", "Purple": "purple"}
@@ -218,7 +234,8 @@ def h_table(headers, rows, header_col=False, cls=""):
     return out + "</tbody></table></div>"
 
 
-def h_blocks(blocks):
+def h_blocks(blocks, mode):
+    preview = mode == "preview"
     out = []
     for b in blocks:
         t = b[0]
@@ -230,18 +247,24 @@ def h_blocks(blocks):
             out.append("<ul>" + "".join(f"<li>{h_inline(i)}</li>" for i in b[1]) + "</ul>")
         elif t == "panel":
             out.append(f'<div class="cf-panel cf-panel-{b[1]}" data-panel-type="{b[1]}">'
-                       f'<p><strong>{h_esc(b[2])}</strong></p>{h_blocks(b[3])}</div>')
+                       f'<p><strong>{h_esc(b[2])}</strong></p>{h_blocks(b[3], mode)}</div>')
+        elif t == "toc" and preview:
+            out.append('<p class="cf-macro">Table of contents</p>')
         elif t == "props":
-            out.append(h_table(None, b[2], header_col=True, cls="cf-props"))
+            table = h_table(None, b[2], header_col=True, cls="cf-props")
+            out.append(f'<div class="cf-macrobox"><p class="cf-macrolabel">Page Properties</p>{table}</div>'
+                       if preview else table)
+        elif t == "report" and preview:
+            out.append(f'<p class="cf-macro">Page Properties Report: one row per page where {h_esc(b[1])}</p>')
         elif t == "table":
             wide = "cf-wide" if len(b[1]) > 8 else ""
             out.append(h_table(b[1], b[2], cls=wide))
         elif t == "expand":
-            out.append(f'<div class="cf-expand" data-node-type="expand" data-title="{h_esc(b[1])}">{h_blocks(b[2])}</div>')
+            out.append(f'<div class="cf-expand" data-node-type="expand" data-title="{h_esc(b[1])}">{h_blocks(b[2], mode)}</div>')
         elif t == "code":
             out.append(f'<pre class="cf-code"><code>{h_esc(b[1])}</code></pre>')
         elif t == "alt":
-            out.append(h_blocks(b[2]))
+            out.append(h_blocks(b[1] if preview else b[2], mode))
     return "\n".join(out)
 
 
@@ -258,7 +281,8 @@ def main():
         (HERE / f"output/storage/{pg['slug']}.xml").write_text(storage + "\n", encoding="utf-8")
         (HERE / f"output/wiki/{pg['slug']}.txt").write_text(wiki + "\n", encoding="utf-8")
         kit.append({k: pg[k] for k in ("slug", "title", "tab", "parent", "label")}
-                   | {"html": h_blocks(pg["blocks"]), "wiki": wiki, "storage": storage})
+                   | {"preview": h_blocks(pg["blocks"], "preview"), "cloud": h_blocks(pg["blocks"], "cloud"),
+                      "wiki": wiki, "storage": storage})
 
     data = json.dumps(kit, ensure_ascii=False).replace("</", "<\\/")
     template = (HERE / "kit_template.html").read_text(encoding="utf-8")

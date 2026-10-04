@@ -1,7 +1,7 @@
 {details:id=mbss-platform}
 ||Platform|Routers & Switches – Cisco IOS|
 ||Vendor / product|Cisco IOS and IOS-XE routers and switches|
-||OS versions in scope|_\[e.g., IOS 15.2(x), IOS-XE 17.x\]_|
+||OS versions in scope|_\[e.g., IOS 15.2\(x), IOS-XE 17.x\]_|
 ||Components in scope|Routers, L3 switches, L2 access switches|
 ||Rule ID prefix|{{CSCO}}|
 ||Devices in scope|_\[count or link to inventory\]_|
