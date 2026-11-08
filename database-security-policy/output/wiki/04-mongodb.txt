@@ -1,0 +1,117 @@
+{details:id=dbsec-platform}
+||Platform|MongoDB|
+||Product|MongoDB Community / Enterprise Server (replica sets, sharded clusters)|
+||Versions in scope|_\[e.g., 7.0, 8.0\]_|
+||Policy|{{SEC-POL-DB-001}}|
+||Technical basis|CIS MongoDB 7 / 8 Benchmark|
+||Tenable audit file(s)|CIS_MongoDB_*.audit (database and mongod.conf checks via Unix audit)|
+||Tenable credential|Database credential, type MongoDB, plus SSH credential for mongod.conf and file checks|
+||Control prefix|{{MONGO}}|
+||Instances in scope|_\[count or link to CMDB\]_|
+||Controls|11|
+||Automated (Tenable)|7 of 11|
+||Compliance % (last scan)|0%|
+||Open CRITICAL / HIGH|0|
+||Last Tenable scan|YYYY-MM-DD|
+||Owner team|_\[Team\]_|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Apply to every mongod and mongos, including arbiters and config servers.
+* MongoDB Atlas: controls Atlas enforces (TLS, authentication) are N/A; project-level settings are reviewed manually.
+* Audit logging and native encryption at rest need Enterprise; Community deployments use the compensating controls in Comments.
+
+h2. Tenable assessment setup
+
+||Item||Value||
+|*Scan template*|Policy Compliance Auditing (credentialed)|
+|*Audit file(s)*|CIS_MongoDB_*.audit (database and mongod.conf checks via Unix audit)|
+|*Credential*|Database credential, type MongoDB, plus SSH credential for mongod.conf and file checks|
+|*Scan account privileges*|Built-in {{clusterMonitor}} and {{read}} on {{admin}}; no root or userAdmin roles|
+|*Tailoring*|Company values from the register below override CIS defaults in the tailored audit file. Store it in _\[repository / Tenable policy name\]_|
+
+h2. Control register
+
+{info:title=How to maintain this register}
+* One row per control. Control IDs are never renumbered or reused.
+* *Tenable Check* describes what the audit item reads and its pass condition. Copy the CIS section from the audit item's {{reference}} field into *CIS Reference*.
+* Changing a Compliant Value is a policy change: record it in the change log and get approval.
+* After every scan, update Compliance % and Open CRITICAL / HIGH in the table at the top of the page.
+{info}
+
+||Control ID||Control Name||Domain||Requirement||Severity||Compliant Value||Tenable Check (Audit / Query)||CIS Reference||Assessment||Last Review (Date / By)||Comments||
+|*MONGO-VER-001*|Supported release with patches|{{VER}}|The server runs a MongoDB release that is not past end of life, at the latest patch level within the patch SLA.|{status:colour=Red|title=CRITICAL}|{{db.version()}} in the approved version list|{{buildInfo}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|*MONGO-AAA-001*|Authorization enabled|{{AAA}}|Access control is on for every node. No node accepts unauthenticated connections.|{status:colour=Red|title=CRITICAL}|{{security.authorization: enabled}}|Unix audit: {{mongod.conf}}; database check: unauthenticated {{listDatabases}} fails|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MONGO-AAA-002*|Strong authentication mechanism|{{AAA}}|Users authenticate with SCRAM-SHA-256, x.509, LDAP or Kerberos. SCRAM-SHA-1 is not allowed.|{status:colour=Yellow|title=HIGH}|{{setParameter.authenticationMechanisms}} excludes {{SCRAM-SHA-1}}|{{getParameter: authenticationMechanisms}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MONGO-AAA-003*|Cluster member authentication|{{AAA}}|Replica set and shard members authenticate each other with x.509 certificates (keyFile only with an exception).|{status:colour=Yellow|title=HIGH}|{{security.clusterAuthMode: x509}}|Unix audit: {{mongod.conf}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MONGO-PRIV-001*|Least-privilege roles|{{PRIV}}|root, userAdminAnyDatabase, dbOwner and clusterAdmin are granted only to approved administrators; applications use custom least-privilege roles.|{status:colour=Yellow|title=HIGH}|Holders of the listed roles match the approved list|{{db.getSiblingDB('admin').system.users.find()}} role listing|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|The reviewer compares role holders with the approved list.|
+|*MONGO-NET-001*|Bind to required interfaces only|{{NET}}|mongod listens only on localhost and the interfaces applications need.|{status:colour=Red|title=CRITICAL}|{{net.bindIp}} does not contain {{0.0.0.0}} or {{::}}; {{net.bindIpAll}} not true|Unix audit: {{mongod.conf}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MONGO-CRYPTO-001*|TLS required|{{CRYPTO}}|All client and intra-cluster connections use TLS 1.2 or higher.|{status:colour=Yellow|title=HIGH}|{{net.tls.mode: requireTLS}}; {{net.tls.disabledProtocols: TLS1_0,TLS1_1}}|Unix audit: {{mongod.conf}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MONGO-CRYPTO-002*|Encryption at rest|{{CRYPTO}}|Databases classified Confidential or higher are encrypted at rest with keys held in KMIP / KMS.|{status:colour=Yellow|title=HIGH}|{{security.enableEncryption: true}} with KMIP (Enterprise), or encrypted volumes (Community)|Unix audit: {{mongod.conf}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Volume encryption is checked by the OS / storage team.|
+|*MONGO-SVC-001*|Server-side JavaScript disabled|{{SVC}}|Server-side JavaScript ($where, mapReduce JS, $function) is disabled unless an application needs it.|{status:colour=Blue|title=MEDIUM}|{{security.javascriptEnabled: false}}|Unix audit: {{mongod.conf}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MONGO-LOG-001*|Audit and system logging|{{LOG}}|Authentication, authorization failures and user / role changes are audited and the logs are forwarded to the SIEM.|{status:colour=Yellow|title=HIGH}|{{auditLog.destination}} set (Enterprise / Percona); {{systemLog.logAppend: true}}|Unix audit: {{mongod.conf}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Community: forward systemLog to the SIEM and record an exception for missing audit events.|
+|*MONGO-OS-001*|Dedicated service account and file permissions|{{OS}}|mongod runs as a dedicated non-root account; keyFile and certificate keys are mode 600; dbPath is owned by the service account.|{status:colour=Blue|title=MEDIUM}|Process owner {{mongod}}; keyFile / PEM mode 600; dbPath mode 750 or stricter|Unix audit: process owner and file permission checks|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|_\[MONGO-DOMAIN-NNN\]_|_\[Short control name\]_|_\[Domain\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Value that passes\]_|_\[Audit item / query + pass condition\]_|_\[CIS §\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, exception IDs\]_|
+
+h2. Control details
+
+Optional. Copy this expand for each control that needs more detail than the register holds.
+
+{expand:title=MONGO-VER-001 – Supported release with patches – details (example)}
+||Field||Value||
+|*Applies to*|_\[All instances / production only / CDB only / ...\]_|
+|*Rationale / risk*|_\[Why the control exists; what happens if it is not met\]_|
+|*Tenable audit item*|_\[Description string of the check in the .audit file\]_|
+|*Audit file and version*|_\[File name, version, date\]_|
+|*Check type*|_\[SQL query / config file / registry / manual\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not installed or not licensed\]_|
+|*Remediation impact*|_\[None / restart required / application change\]_|
+|*CIS reference*|_\[Benchmark name, version, section\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+
+*Evidence query (example, verify before use):*
+
+{code}
+db.adminCommand({ getCmdLineOpts: 1 }).parsed.security
+db.adminCommand({ getParameter: 1, authenticationMechanisms: 1 })
+{code}
+
+*Remediation (example, apply through change management):*
+
+{code}
+# /etc/mongod.conf
+security:
+  authorization: enabled
+  javascriptEnabled: false
+net:
+  bindIp: 127.0.0.1,10.20.30.40
+  tls:
+    mode: requireTLS
+    disabledProtocols: TLS1_0,TLS1_1
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[Compliant / remediated / exception raised\]_|_\[Notes\]_|
+{expand}
+
+h2. Known Tenable limitations & false positives
+
+||Control ID||Limitation / false-positive scenario||Impact||Workaround||
+|_\[MONGO-DOMAIN-NNN\]_|_\[What the audit gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step or audit tailoring\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

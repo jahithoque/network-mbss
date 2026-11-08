@@ -1,0 +1,185 @@
+{details:id=dbsec-policy}
+||Policy ID|{{SEC-POL-DB-001}}|
+||Policy type|Company policy – technical security standard|
+||Policy owner|_\[CISO / Head of Information Security\]_|
+||Maintained by|_\[Database Engineering & Security Architecture\]_|
+||Approver|_\[Name, role\]_|
+||Version|0.1|
+||Policy status|{status:colour=Grey|title=DRAFT}|
+||Effective date|YYYY-MM-DD|
+||Next review due|YYYY-MM-DD (12 months after approval)|
+||Classification|Internal|
+{details}
+
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{toc:maxLevel=2}
+
+h2. 1. Purpose
+
+This policy sets the minimum security configuration for every company database. It protects the confidentiality, integrity and availability of company and customer data, and gives auditors one place to see each requirement, how Tenable assesses it, and the current compliance status.
+
+h2. 2. Policy statement
+
+* Every database in scope *must* be configured to meet the controls on its platform page before it goes into production, and must stay compliant for its whole life.
+* Database configuration compliance *must* be assessed with Tenable using the approved audit files on the schedule in section 6.
+* Failed controls *must* be remediated within the timelines in section 7, or covered by an approved, time-limited exception.
+* New database platforms or major versions *must not* go into production until a platform page for them is approved.
+
+h2. 3. Scope
+
+All database instances owned or operated by the company, or operated for it by a third party, in production, DR, UAT and development environments, on-premises or in the cloud (IaaS). Managed database services (PaaS) are in scope for the controls the company can configure.
+
+||Platform||Product||Versions in scope||Technical basis||Control prefix||Platform page||
+|Oracle|Oracle Database (single instance, RAC, Data Guard; CDB and PDBs)|_\[e.g., 19c, 23ai\]_|CIS Oracle Database 19c Benchmark (use the 23ai benchmark for 23ai)|{{ORA}}|DB Security – Oracle|
+|Microsoft SQL Server|Microsoft SQL Server (Database Engine, on Windows or Linux; Always On availability groups)|_\[e.g., 2019, 2022\]_|CIS Microsoft SQL Server 2019 / 2022 Benchmark|{{MSSQL}}|DB Security – Microsoft SQL Server|
+|MySQL|MySQL Community / Enterprise Server (InnoDB Cluster, replication)|_\[e.g., 8.0, 8.4 LTS\]_|CIS Oracle MySQL Community / Enterprise Server 8.0 Benchmark|{{MYSQL}}|DB Security – MySQL|
+|MongoDB|MongoDB Community / Enterprise Server (replica sets, sharded clusters)|_\[e.g., 7.0, 8.0\]_|CIS MongoDB 7 / 8 Benchmark|{{MONGO}}|DB Security – MongoDB|
+|IBM Db2|IBM Db2 for Linux, UNIX and Windows (LUW), including HADR|_\[e.g., 11.5.x\]_|CIS IBM Db2 11 Benchmark|{{DB2}}|DB Security – IBM Db2|
+|Teradata|Teradata Vantage (on-premises / VantageCore, VantageCloud Enterprise)|_\[e.g., 17.20, 20.00\]_|No CIS Benchmark is published. Company baseline derived from the Teradata Vantage Security Administration guide and DB-COM controls|{{TD}}|DB Security – Teradata|
+
+*Out of scope:* _\[e.g., embedded databases inside vendor appliances, developer workstations, decommissioned systems\]_
+
+h2. 4. Roles and responsibilities
+
+||Role||Responsibilities||
+|*Policy owner (CISO)*|Approves the policy and exceptions rated CRITICAL; reports compliance to the risk committee|
+|*Database Engineering / DBAs*|Build databases to this policy, remediate findings, keep platform pages and control values current|
+|*Vulnerability Management (Tenable)*|Maintain scan policies, audit files and credentials; run scans; publish compliance results|
+|*Application / data owners*|Approve access, classify data, accept risk for exceptions on their systems|
+|*Security Operations (SOC)*|Receive and monitor database audit logs in the SIEM|
+|*Internal Audit*|Independently test compliance with this policy|
+
+h2. 5. Common baseline (all platforms)
+
+Every platform page implements these company-wide requirements. Platform pages may be stricter, never weaker.
+
+||ID||Domain||Requirement||Minimum value||
+|*DB-COM-01*|{{VER}}|Run a vendor-supported release and apply security patches within the patch SLA.|No end-of-support versions; latest security patch level minus one at most|
+|*DB-COM-02*|{{AAA}}|Change, lock or remove every vendor default and sample account.|No account with a default or blank password|
+|*DB-COM-03*|{{AAA}}|Human administrators authenticate with named accounts through central directory (AD / LDAP / Kerberos) where the platform supports it.|No shared admin logons; break-glass account vaulted in PAM|
+|*DB-COM-04*|{{AAA}}|Local database accounts follow the corporate password standard.|Min. 14 characters, complexity on, lockout after ≤ 5 failures, expiry ≤ 90 days for human accounts, reuse history ≥ 10|
+|*DB-COM-05*|{{PRIV}}|Grant privileges through roles on least privilege. Nothing beyond vendor defaults to PUBLIC / guest.|Admin roles limited to the approved DBA group; quarterly access review|
+|*DB-COM-06*|{{CRYPTO}}|Encrypt all client and replication traffic.|TLS 1.2 or higher (or native network encryption with AES-256); plaintext listeners disabled|
+|*DB-COM-07*|{{CRYPTO}}|Encrypt data at rest for databases classified Confidential or higher.|TDE / native encryption, or encrypted volumes with keys outside the DB host|
+|*DB-COM-08*|{{LOG}}|Audit logons (success and failure), privilege and security changes, and DDL. Forward to the SIEM.|Audit enabled; retained ≥ 12 months (90 days online)|
+|*DB-COM-09*|{{NET}}|Expose the database only to the application and admin networks that need it.|Bound to required interfaces; host / network firewall allow-list|
+|*DB-COM-10*|{{SVC}}|Disable features that execute OS commands, read files or open network connections unless approved.|Off by default; approved exceptions only|
+|*DB-COM-11*|{{OS}}|Run database services under a dedicated, non-root / non-administrator account. No credentials in clear text in files or scripts.|Dedicated service account; config files readable only by the service account|
+|*DB-COM-12*|{{BKP}}|Encrypt backups and test restores.|Encrypted backups; restore test at least annually|
+
+h2. 6. Compliance assessment with Tenable
+
+||Item||Requirement||
+|*Scan template*|Tenable *Policy Compliance Auditing* (credentialed), with the audit files listed on each platform page|
+|*Audit files*|CIS-based Tenable audit files, tailored to the company values on the platform pages. Tailored copies are version-controlled and the version is recorded on each platform page|
+|*Credentials*|Dedicated read-only scan account per platform (privileges on each platform page), stored in Tenable / PAM, never a DBA account|
+|*Frequency*|Production: monthly and after every major change or upgrade. Non-production: quarterly. New builds: before go-live|
+|*Targets*|Asset lists synchronized from the CMDB database inventory; every instance in scope is scanned|
+|*Compliance target*|100% of CRITICAL and HIGH controls passing (or covered by an exception); ≥ 95% of all controls|
+|*Results*|Published to the compliance dashboard below; failed controls raise remediation tickets for the owning team|
+|*Manual controls*|Controls marked MANUAL / PARTIAL are reviewed quarterly; evidence is attached to the review ticket|
+
+h2. 7. Severity, remediation and status legend
+
+h3. Severity and remediation timelines
+
+||Severity||Meaning||Remediate within (production)||Remediate within (non-production)||
+|{status:colour=Red|title=CRITICAL}|Direct path to unauthorized access or data exposure|15 days|30 days|
+|{status:colour=Yellow|title=HIGH}|Significant weakness in authentication, privileges, encryption or auditing|30 days|60 days|
+|{status:colour=Blue|title=MEDIUM}|Hardening gap with limited direct exposure|90 days|120 days|
+|{status:colour=Grey|title=LOW}|Best practice or hygiene item|Next maintenance window|Next maintenance window|
+
+_Timelines run from the Tenable scan date that first reports the failure. Align them with the corporate vulnerability management standard before approval._
+
+h3. Assessment status
+
+||Status||Meaning||
+|{status:colour=Green|title=AUTOMATED}|The Tenable audit fully assesses the requirement; PASS / FAIL comes from the scan|
+|{status:colour=Yellow|title=PARTIAL}|Tenable collects the data but a reviewer completes the check (e.g., against an approved list)|
+|{status:colour=Blue|title=MANUAL}|A DBA or reviewer collects evidence by hand during the review|
+|{status:colour=Purple|title=PLANNED}|A custom audit check is being built|
+|{status:colour=Grey|title=NOT FEASIBLE}|Cannot be assessed from the database or host; evidence is collected another way|
+
+h2. 8. Compliance dashboard
+
+The report below reads the Page Properties table on each platform page. Platform pages need the label {{dbsec-platform}} to appear here.
+
+{detailssummary:cql=label = "dbsec-platform" and space = currentSpace()|headings=Platform,Controls,Automated (Tenable),Compliance % (last scan),Open CRITICAL / HIGH,Last Tenable scan,Owner team}
+
+{expand:title=Manual compliance table (use if the report macro is not available)}
+||Platform||Controls||Automated||Partial||Manual / planned||Compliance % (last scan)||Open CRITICAL / HIGH||Last scan||
+|Oracle|13|9|4|0|0%|0|YYYY-MM-DD|
+|Microsoft SQL Server|15|10|5|0|0%|0|YYYY-MM-DD|
+|MySQL|12|7|5|0|0%|0|YYYY-MM-DD|
+|MongoDB|11|7|4|0|0%|0|YYYY-MM-DD|
+|IBM Db2|11|7|4|0|0%|0|YYYY-MM-DD|
+|Teradata|10|0|0|10|0%|0|YYYY-MM-DD|
+{expand}
+
+h2. 9. Cross-platform control matrix
+
+Platform controls that implement each common baseline requirement. A gap means the requirement is assessed by another process (e.g., backups by the backup standard, host hardening by the OS standard) or a control still has to be written.
+
+||Baseline||Requirement||Oracle||Microsoft SQL Server||MySQL||MongoDB||IBM Db2||Teradata||
+|*DB-COM-01*|Run a vendor-supported release and apply security patches within the patch SLA.|ORA-VER-001|MSSQL-VER-001|MYSQL-VER-001|MONGO-VER-001|DB2-VER-001|TD-VER-001|
+|*DB-COM-02*|Change, lock or remove every vendor default and sample account.|ORA-AAA-001, ORA-SVC-002|MSSQL-AAA-002|MYSQL-AAA-001, MYSQL-SVC-002|MONGO-AAA-001|_\[Gap – add control or N/A\]_|TD-AAA-001|
+|*DB-COM-03*|Human administrators authenticate with named accounts through central directory (AD / LDAP / Kerberos) where the platform supports it.|ORA-AAA-003, ORA-AAA-004|MSSQL-AAA-001|_\[Gap – add control or N/A\]_|MONGO-AAA-002, MONGO-AAA-003|DB2-AAA-001, DB2-AAA-002|TD-AAA-003|
+|*DB-COM-04*|Local database accounts follow the corporate password standard.|ORA-AAA-002|MSSQL-AAA-003|MYSQL-AAA-002, MYSQL-AAA-003|_\[Gap – add control or N/A\]_|_\[Gap – add control or N/A\]_|TD-AAA-002|
+|*DB-COM-05*|Grant privileges through roles on least privilege. Nothing beyond vendor defaults to PUBLIC / guest.|ORA-PRIV-001, ORA-PRIV-002|MSSQL-PRIV-001, MSSQL-PRIV-002, MSSQL-PRIV-003|MYSQL-PRIV-001|MONGO-PRIV-001|DB2-PRIV-001, DB2-PRIV-002, DB2-PRIV-003|TD-PRIV-001, TD-PRIV-002|
+|*DB-COM-06*|Encrypt all client and replication traffic.|ORA-CRYPTO-001|MSSQL-CRYPTO-001|MYSQL-CRYPTO-001|MONGO-CRYPTO-001|DB2-CRYPTO-001|TD-CRYPTO-001|
+|*DB-COM-07*|Encrypt data at rest for databases classified Confidential or higher.|ORA-CRYPTO-002|MSSQL-CRYPTO-002|_\[Gap – add control or N/A\]_|MONGO-CRYPTO-002|DB2-CRYPTO-002|TD-CRYPTO-002|
+|*DB-COM-08*|Audit logons (success and failure), privilege and security changes, and DDL. Forward to the SIEM.|ORA-LOG-001|MSSQL-LOG-001|MYSQL-LOG-001|MONGO-LOG-001|DB2-LOG-001|TD-LOG-001|
+|*DB-COM-09*|Expose the database only to the application and admin networks that need it.|ORA-NET-001|MSSQL-NET-001|_\[Gap – add control or N/A\]_|MONGO-NET-001|DB2-NET-001|TD-NET-001|
+|*DB-COM-10*|Disable features that execute OS commands, read files or open network connections unless approved.|ORA-PRIV-001, ORA-SVC-001|MSSQL-SVC-001, MSSQL-SVC-002, MSSQL-SVC-003|MYSQL-SVC-001, MYSQL-SVC-003|MONGO-SVC-001|_\[Gap – add control or N/A\]_|_\[Gap – add control or N/A\]_|
+|*DB-COM-11*|Run database services under a dedicated, non-root / non-administrator account. No credentials in clear text in files or scripts.|_\[Gap – add control or N/A\]_|MSSQL-OS-001|MYSQL-OS-001, MYSQL-OS-002|MONGO-OS-001|DB2-OS-001|_\[Gap – add control or N/A\]_|
+|*DB-COM-12*|Encrypt backups and test restores.|_\[Gap – add control or N/A\]_|_\[Gap – add control or N/A\]_|_\[Gap – add control or N/A\]_|_\[Gap – add control or N/A\]_|_\[Gap – add control or N/A\]_|_\[Gap – add control or N/A\]_|
+
+h2. 10. Exceptions
+
+* Any control that cannot be met needs an exception in *DB Security – Exceptions Register* before the remediation deadline.
+* Exceptions have a named risk owner, a compensating control and an expiry date of at most 12 months.
+* CRITICAL exceptions are approved by the policy owner; others by the Head of Database Engineering and the application owner.
+* Approved exceptions are applied as exclusions in Tenable so they are not reported as failures, and are re-reviewed at expiry.
+
+h2. 11. Non-compliance
+
+Overdue findings without an approved exception are escalated to the system owner's management and reported to the risk committee. Databases with open CRITICAL findings may be isolated from the network. Wilful breach of this policy may lead to disciplinary action under the company code of conduct.
+
+h2. 12. Control ID convention
+
+Format: {{<PREFIX>-<DOMAIN>-<NNN>}}, for example {{ORA-AAA-001}}. Prefixes: ORA Oracle, MSSQL Microsoft SQL Server, MYSQL MySQL, MONGO MongoDB, DB2 IBM Db2, TD Teradata. Control IDs are never renumbered or reused; retired controls are struck through with {{RETIRED vX.Y}} in Comments.
+
+||Domain code||Domain||Typical controls||
+|{{VER}}|Software & patching|Vendor-supported release, security patches / release updates applied|
+|{{AAA}}|Authentication|Default accounts, password policy, lockout, central authentication|
+|{{PRIV}}|Authorization & privileges|Least privilege, PUBLIC / guest rights, admin role membership|
+|{{CRYPTO}}|Encryption|TLS in transit, encryption at rest, key management|
+|{{LOG}}|Auditing & logging|Database audit trail, failed / successful logons, forwarding to SIEM|
+|{{NET}}|Network exposure|Listener / bind address, ports, remote administration|
+|{{SVC}}|Features & configuration|Dangerous features disabled, sample databases removed, secure parameters|
+|{{OS}}|Host & file system|Service account, file permissions, no clear-text credentials on disk|
+|{{BKP}}|Backup & recovery|Encrypted backups, restore testing|
+
+h2. 13. Policy review
+
+* This policy is reviewed at least *annually* and approved by the policy owner.
+* Platform pages are also reviewed after a new CIS Benchmark or Tenable audit file release, a major database version, or an audit finding.
+* When a new benchmark version is adopted, record the benchmark and audit file versions on the platform page and update the CIS Reference column.
+
+h2. 14. Change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|
+
+h2. 15. References
+
+* CIS Benchmarks: https://www.cisecurity.org/cis-benchmarks (basis for control values; licence terms apply to benchmark content)
+* Tenable compliance audit files: https://www.tenable.com/audits
+* Corporate Information Security Policy: _\[add link\]_
+* Corporate password standard: _\[add link\]_
+* Vulnerability management standard (remediation SLAs): _\[add link\]_
+* Data classification standard: _\[add link\]_

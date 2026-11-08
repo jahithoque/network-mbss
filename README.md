@@ -11,3 +11,7 @@ python3 confluence-template/build.py   # regenerate outputs after editing pages.
 ```
 
 Example rules and commands are illustrative placeholders. Verify them against your own OS versions and policy.
+
+## Database Security Configuration Policy
+
+[`database-security-policy/`](database-security-policy/) holds company policy SEC-POL-DB-001 for Oracle, SQL Server, MySQL, MongoDB, IBM Db2 and Teradata: CIS-based controls assessed with Tenable. **Start with [`database-security-policy-confluence.md`](database-security-policy/output/database-security-policy-confluence.md).** The folder is self-contained so it can be split into its own repository (see its README).

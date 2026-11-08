@@ -1,0 +1,116 @@
+{details:id=dbsec-platform}
+||Platform|Microsoft SQL Server|
+||Product|Microsoft SQL Server (Database Engine, on Windows or Linux; Always On availability groups)|
+||Versions in scope|_\[e.g., 2019, 2022\]_|
+||Policy|{{SEC-POL-DB-001}}|
+||Technical basis|CIS Microsoft SQL Server 2019 / 2022 Benchmark|
+||Tenable audit file(s)|CIS_Microsoft_SQL_Server_2022_*.audit (database checks) + Windows audit for registry / service checks|
+||Tenable credential|Database credential, type SQL Server (Windows or SQL authentication; one entry per instance / port)|
+||Control prefix|{{MSSQL}}|
+||Instances in scope|_\[count or link to CMDB\]_|
+||Controls|15|
+||Automated (Tenable)|10 of 15|
+||Compliance % (last scan)|0%|
+||Open CRITICAL / HIGH|0|
+||Last Tenable scan|YYYY-MM-DD|
+||Owner team|_\[Team\]_|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Instance-level controls apply to every instance, including named instances and SSRS / SSAS hosts where a Database Engine is installed.
+* Database-level controls (guest, TRUSTWORTHY, TDE) apply to every user database; system databases are noted in Comments.
+* Azure SQL Database / Managed Instance: controls the platform enforces are N/A.
+
+h2. Tenable assessment setup
+
+||Item||Value||
+|*Scan template*|Policy Compliance Auditing (credentialed)|
+|*Audit file(s)*|CIS_Microsoft_SQL_Server_2022_*.audit (database checks) + Windows audit for registry / service checks|
+|*Credential*|Database credential, type SQL Server (Windows or SQL authentication; one entry per instance / port)|
+|*Scan account privileges*|{{VIEW SERVER STATE}}, {{VIEW ANY DEFINITION}}, {{CONNECT ANY DATABASE}} (2014+), membership of the user role in {{msdb}}; no sysadmin|
+|*Tailoring*|Company values from the register below override CIS defaults in the tailored audit file. Store it in _\[repository / Tenable policy name\]_|
+
+h2. Control register
+
+{info:title=How to maintain this register}
+* One row per control. Control IDs are never renumbered or reused.
+* *Tenable Check* describes what the audit item reads and its pass condition. Copy the CIS section from the audit item's {{reference}} field into *CIS Reference*.
+* Changing a Compliant Value is a policy change: record it in the change log and get approval.
+* After every scan, update Compliance % and Open CRITICAL / HIGH in the table at the top of the page.
+{info}
+
+||Control ID||Control Name||Domain||Requirement||Severity||Compliant Value||Tenable Check (Audit / Query)||CIS Reference||Assessment||Last Review (Date / By)||Comments||
+|*MSSQL-VER-001*|Supported version with latest CU / GDR|{{VER}}|The instance runs a supported version with the latest security update (CU or GDR) within the patch SLA.|{status:colour=Red|title=CRITICAL}|{{SERVERPROPERTY('ProductUpdateLevel')}} matches the approved build list|{{SELECT @@VERSION}}; compared with the approved build list|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Tenable vulnerability plugins also flag missing updates.|
+|*MSSQL-AAA-001*|Windows authentication mode|{{AAA}}|Instances use Windows Authentication only. Mixed mode needs an approved exception.|{status:colour=Yellow|title=HIGH}|{{SERVERPROPERTY('IsIntegratedSecurityOnly')}} = 1|Query {{SERVERPROPERTY}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-AAA-002*|sa disabled and renamed|{{AAA}}|The built-in sa login (principal_id 1) is disabled and renamed.|{status:colour=Yellow|title=HIGH}|{{sys.server_principals}} where {{principal_id = 1}}: {{is_disabled = 1}}, name ≠ 'sa'|Query {{sys.server_principals}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-AAA-003*|SQL logins follow password policy|{{AAA}}|Every SQL-authenticated login enforces the Windows password policy; expiration is enforced for logins in sysadmin.|{status:colour=Yellow|title=HIGH}|{{is_policy_checked = 1}} for all SQL logins; {{is_expiration_checked = 1}} for sysadmin members|Query {{sys.sql_logins}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-SVC-001*|xp_cmdshell disabled|{{SVC}}|xp_cmdshell must be disabled.|{status:colour=Red|title=CRITICAL}|{{xp_cmdshell}} value_in_use = 0|Query {{sys.configurations}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-SVC-002*|Surface-area options disabled|{{SVC}}|Server options that extend the attack surface are disabled unless approved.|{status:colour=Yellow|title=HIGH}|value_in_use = 0 for {{Ad Hoc Distributed Queries}}, {{clr enabled}}, {{cross db ownership chaining}}, {{Database Mail XPs}}, {{Ole Automation Procedures}}, {{remote access}}, {{scan for startup procs}}; {{clr strict security}} = 1|Query {{sys.configurations}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_|Database Mail is often required; record approved instances as exceptions.|
+|*MSSQL-SVC-003*|Remote DAC restricted|{{SVC}}|The remote dedicated admin connection is off, except on clustered instances where it is needed.|{status:colour=Blue|title=MEDIUM}|{{remote admin connections}} = 0 (1 allowed on failover cluster instances)|Query {{sys.configurations}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-PRIV-001*|guest has no CONNECT in user databases|{{PRIV}}|The guest user cannot connect to any database other than master, tempdb and msdb.|{status:colour=Yellow|title=HIGH}|No {{CONNECT}} granted to guest in user databases|Query {{sys.database_permissions}} in each database|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-PRIV-002*|PUBLIC role has only default permissions|{{PRIV}}|No permissions are granted to the public server role beyond the defaults; sysadmin members match the approved list.|{status:colour=Yellow|title=HIGH}|Only default public grants (VIEW ANY DATABASE, CONNECT on default endpoints)|Query {{sys.server_permissions}} for grantee_principal_id = 2; list sysadmin members|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|sysadmin membership is compared with the approved list by the reviewer.|
+|*MSSQL-PRIV-003*|TRUSTWORTHY off|{{PRIV}}|TRUSTWORTHY is OFF for every user database.|{status:colour=Yellow|title=HIGH}|{{is_trustworthy_on = 0}} (msdb excepted)|Query {{sys.databases}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-NET-001*|Instance not advertised|{{NET}}|The instance is hidden from SQL Browser enumeration and does not listen on the default port where feasible.|{status:colour=Grey|title=LOW}|HideInstance = 1; static port other than 1433|Windows audit: registry check under {{MSSQLServer\SuperSocketNetLib}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-CRYPTO-001*|Forced TLS encryption|{{CRYPTO}}|Client connections are encrypted with TLS 1.2 or higher using a trusted certificate.|{status:colour=Yellow|title=HIGH}|ForceEncryption = 1; TLS 1.0 / 1.1 disabled in SCHANNEL|Windows audit: registry check on {{SuperSocketNetLib\ForceEncryption}} and SCHANNEL protocols|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MSSQL-CRYPTO-002*|TDE for confidential databases|{{CRYPTO}}|Databases classified Confidential or higher use Transparent Data Encryption; certificates are backed up off-host.|{status:colour=Yellow|title=HIGH}|{{sys.dm_database_encryption_keys}} encryption_state = 3|Query {{sys.dm_database_encryption_keys}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Data classification comes from the CMDB.|
+|*MSSQL-LOG-001*|Login and security auditing|{{LOG}}|Failed and successful logins and security changes are audited and forwarded to the SIEM.|{status:colour=Yellow|title=HIGH}|Server audit spec with {{FAILED_LOGIN_GROUP}}, {{SUCCESSFUL_LOGIN_GROUP}}, {{AUDIT_CHANGE_GROUP}}; login auditing = Both|Query {{sys.server_audit_specification_details}}; registry AuditLevel = 3|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|SIEM forwarding is confirmed manually by the SOC.|
+|*MSSQL-OS-001*|Dedicated low-privilege service accounts|{{OS}}|Each SQL Server service runs under its own virtual, managed or domain account that is not a local or domain administrator.|{status:colour=Blue|title=MEDIUM}|Service accounts not in local Administrators; one account per service|{{sys.dm_server_services}} + Windows audit group membership check|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|_\[MSSQL-DOMAIN-NNN\]_|_\[Short control name\]_|_\[Domain\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Value that passes\]_|_\[Audit item / query + pass condition\]_|_\[CIS §\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, exception IDs\]_|
+
+h2. Control details
+
+Optional. Copy this expand for each control that needs more detail than the register holds.
+
+{expand:title=MSSQL-VER-001 – Supported version with latest CU / GDR – details (example)}
+||Field||Value||
+|*Applies to*|_\[All instances / production only / CDB only / ...\]_|
+|*Rationale / risk*|_\[Why the control exists; what happens if it is not met\]_|
+|*Tenable audit item*|_\[Description string of the check in the .audit file\]_|
+|*Audit file and version*|_\[File name, version, date\]_|
+|*Check type*|_\[SQL query / config file / registry / manual\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not installed or not licensed\]_|
+|*Remediation impact*|_\[None / restart required / application change\]_|
+|*CIS reference*|_\[Benchmark name, version, section\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+
+*Evidence query (example, verify before use):*
+
+{code}
+SELECT name, CAST(value_in_use AS int) AS value_in_use
+  FROM sys.configurations
+ WHERE name IN ('xp_cmdshell', 'clr enabled', 'Ole Automation Procedures');
+{code}
+
+*Remediation (example, apply through change management):*
+
+{code}
+EXEC sp_configure 'show advanced options', 1; RECONFIGURE;
+EXEC sp_configure 'xp_cmdshell', 0; RECONFIGURE;
+EXEC sp_configure 'show advanced options', 0; RECONFIGURE;
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[Compliant / remediated / exception raised\]_|_\[Notes\]_|
+{expand}
+
+h2. Known Tenable limitations & false positives
+
+||Control ID||Limitation / false-positive scenario||Impact||Workaround||
+|_\[MSSQL-DOMAIN-NNN\]_|_\[What the audit gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step or audit tailoring\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

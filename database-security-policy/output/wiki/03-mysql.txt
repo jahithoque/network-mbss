@@ -1,0 +1,112 @@
+{details:id=dbsec-platform}
+||Platform|MySQL|
+||Product|MySQL Community / Enterprise Server (InnoDB Cluster, replication)|
+||Versions in scope|_\[e.g., 8.0, 8.4 LTS\]_|
+||Policy|{{SEC-POL-DB-001}}|
+||Technical basis|CIS Oracle MySQL Community / Enterprise Server 8.0 Benchmark|
+||Tenable audit file(s)|CIS_MySQL_8.0_*.audit (database checks) + Unix audit for my.cnf and file permission checks|
+||Tenable credential|Database credential, type MySQL (TCP port; one entry per instance)|
+||Control prefix|{{MYSQL}}|
+||Instances in scope|_\[count or link to CMDB\]_|
+||Controls|12|
+||Automated (Tenable)|7 of 12|
+||Compliance % (last scan)|0%|
+||Open CRITICAL / HIGH|0|
+||Last Tenable scan|YYYY-MM-DD|
+||Owner team|_\[Team\]_|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* MariaDB and Percona Server are in scope with this page as the baseline; differences are noted in Comments.
+* Configuration-file controls ({{my.cnf}}) are checked through the Unix (SSH) part of the scan.
+* Managed services (Amazon RDS / Aurora, Azure Database for MySQL): host and file controls are N/A.
+
+h2. Tenable assessment setup
+
+||Item||Value||
+|*Scan template*|Policy Compliance Auditing (credentialed)|
+|*Audit file(s)*|CIS_MySQL_8.0_*.audit (database checks) + Unix audit for my.cnf and file permission checks|
+|*Credential*|Database credential, type MySQL (TCP port; one entry per instance)|
+|*Scan account privileges*|{{SELECT}} on {{mysql.*}} and {{performance_schema.*}}, {{PROCESS}}; no SUPER or administrative grants|
+|*Tailoring*|Company values from the register below override CIS defaults in the tailored audit file. Store it in _\[repository / Tenable policy name\]_|
+
+h2. Control register
+
+{info:title=How to maintain this register}
+* One row per control. Control IDs are never renumbered or reused.
+* *Tenable Check* describes what the audit item reads and its pass condition. Copy the CIS section from the audit item's {{reference}} field into *CIS Reference*.
+* Changing a Compliant Value is a policy change: record it in the change log and get approval.
+* After every scan, update Compliance % and Open CRITICAL / HIGH in the table at the top of the page.
+{info}
+
+||Control ID||Control Name||Domain||Requirement||Severity||Compliant Value||Tenable Check (Audit / Query)||CIS Reference||Assessment||Last Review (Date / By)||Comments||
+|*MYSQL-VER-001*|Supported release with security patches|{{VER}}|The server runs a supported release (8.0 until its EOL, or 8.4 LTS) at the latest patch level within the patch SLA.|{status:colour=Red|title=CRITICAL}|{{SELECT VERSION()}} in the approved version list|{{SELECT VERSION()}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-AAA-001*|No anonymous or wildcard admin accounts|{{AAA}}|No anonymous accounts exist; root and admin accounts cannot log in from any host.|{status:colour=Red|title=CRITICAL}|No row with {{user = ''}}; root only on {{localhost}}; no admin with {{host = '%'}}|Query {{mysql.user}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-AAA-002*|Password validation component|{{AAA}}|Password strength validation enforces the corporate password standard.|{status:colour=Yellow|title=HIGH}|{{validate_password.length}} ≥ 14, {{validate_password.policy}} = MEDIUM or STRONG, {{password_history}} ≥ 10, {{default_password_lifetime}} ≤ 90|{{SHOW GLOBAL VARIABLES LIKE 'validate_password%'}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_|Service accounts may use PASSWORD EXPIRE NEVER when the password is rotated by PAM.|
+|*MYSQL-AAA-003*|Failed-login lockout|{{AAA}}|Accounts lock after repeated failed logins (8.0.19+), or connection-control throttling is enabled.|{status:colour=Blue|title=MEDIUM}|{{FAILED_LOGIN_ATTEMPTS}} ≤ 5 and {{PASSWORD_LOCK_TIME}} ≥ 1 on human accounts|Query {{mysql.user.User_attributes}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-PRIV-001*|Administrative privileges restricted|{{PRIV}}|FILE, SUPER, PROCESS, SHUTDOWN, CREATE USER, GRANT OPTION and dynamic admin privileges are held only by approved admin accounts.|{status:colour=Yellow|title=HIGH}|Grantees match the approved admin list|Query {{mysql.user}} and {{mysql.global_grants}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Tenable lists grantees; the reviewer compares with the approved list.|
+|*MYSQL-SVC-001*|Local file loading disabled|{{SVC}}|Clients cannot load local files into the server, and server-side file import / export is limited to one directory.|{status:colour=Yellow|title=HIGH}|{{local_infile = 0}}; {{secure_file_priv}} set to a dedicated directory or NULL|{{SHOW GLOBAL VARIABLES}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-SVC-002*|Test database and sample data removed|{{SVC}}|The test database and any sample schemas are removed.|{status:colour=Grey|title=LOW}|{{SHOW DATABASES}} has no {{test}} database|{{SHOW DATABASES}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-SVC-003*|Strict SQL mode|{{SVC}}|The server rejects invalid data instead of silently truncating it.|{status:colour=Grey|title=LOW}|{{sql_mode}} includes {{STRICT_ALL_TABLES}} or {{STRICT_TRANS_TABLES}}|{{SELECT @@GLOBAL.sql_mode}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-CRYPTO-001*|Secure transport required|{{CRYPTO}}|All client and replication connections use TLS 1.2 or higher.|{status:colour=Yellow|title=HIGH}|{{require_secure_transport = ON}}; {{tls_version = TLSv1.2,TLSv1.3}}|{{SHOW GLOBAL VARIABLES LIKE '%tls%'}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-LOG-001*|Error and audit logging|{{LOG}}|The error log is written to a protected location and an audit log plugin / component records connections and privilege changes.|{status:colour=Yellow|title=HIGH}|{{log_error}} set; audit log plugin active (Enterprise Audit, Percona or MariaDB audit plugin)|{{SHOW PLUGINS}} / {{SHOW GLOBAL VARIABLES LIKE 'log_error%'}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Community Edition has no bundled audit plugin; record the approved alternative.|
+|*MYSQL-OS-001*|Dedicated service account and file permissions|{{OS}}|mysqld runs as a dedicated non-root account; data directory and config files are readable only by that account.|{status:colour=Blue|title=MEDIUM}|{{mysqld}} runs as {{mysql}}; {{datadir}} mode 750 or stricter; {{my.cnf}} not world-writable|Unix audit: process owner and file permission checks|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*MYSQL-OS-002*|No clear-text passwords on disk or in environment|{{OS}}|Passwords are not stored in my.cnf, scripts, shell history or the MYSQL_PWD variable. Use the login path or a vault.|{status:colour=Yellow|title=HIGH}|No {{password=}} in option files; {{MYSQL_PWD}} unset|Unix audit: content check on option files|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|_\[MYSQL-DOMAIN-NNN\]_|_\[Short control name\]_|_\[Domain\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Value that passes\]_|_\[Audit item / query + pass condition\]_|_\[CIS §\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, exception IDs\]_|
+
+h2. Control details
+
+Optional. Copy this expand for each control that needs more detail than the register holds.
+
+{expand:title=MYSQL-VER-001 – Supported release with security patches – details (example)}
+||Field||Value||
+|*Applies to*|_\[All instances / production only / CDB only / ...\]_|
+|*Rationale / risk*|_\[Why the control exists; what happens if it is not met\]_|
+|*Tenable audit item*|_\[Description string of the check in the .audit file\]_|
+|*Audit file and version*|_\[File name, version, date\]_|
+|*Check type*|_\[SQL query / config file / registry / manual\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not installed or not licensed\]_|
+|*Remediation impact*|_\[None / restart required / application change\]_|
+|*CIS reference*|_\[Benchmark name, version, section\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+
+*Evidence query (example, verify before use):*
+
+{code}
+SELECT user, host FROM mysql.user
+ WHERE user = '' OR (host = '%' AND user IN ('root', 'admin'));
+{code}
+
+*Remediation (example, apply through change management):*
+
+{code}
+DROP USER ''@'localhost';
+DROP USER ''@'%';
+RENAME USER 'root'@'%' TO 'root'@'localhost';
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[Compliant / remediated / exception raised\]_|_\[Notes\]_|
+{expand}
+
+h2. Known Tenable limitations & false positives
+
+||Control ID||Limitation / false-positive scenario||Impact||Workaround||
+|_\[MYSQL-DOMAIN-NNN\]_|_\[What the audit gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step or audit tailoring\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

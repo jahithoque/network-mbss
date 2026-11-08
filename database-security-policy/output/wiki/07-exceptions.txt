@@ -1,0 +1,23 @@
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{note:title=Before you add an exception}
+* Every exception needs a business justification, a compensating control, a named risk owner and an expiry date (max. 12 months).
+* CRITICAL controls: approval by the policy owner (CISO). Others: Head of Database Engineering and the application owner.
+* Ask Vulnerability Management to exclude the instance from that Tenable audit item, and record it in *Excluded in Tenable?*.
+* Put the Exception ID in the Comments column of the control on its platform page.
+{note}
+
+h2. Status
+
+||Status||Meaning||
+|{status:colour=Green|title=ACTIVE}|Approved and within its expiry date|
+|{status:colour=Yellow|title=EXPIRING}|Expires within 30 days; renew or remediate|
+|{status:colour=Red|title=EXPIRED}|Past expiry; the instance is non-compliant|
+|{status:colour=Grey|title=CLOSED}|Remediated or no longer needed|
+
+h2. Register
+
+||Exception ID||Control ID||Platform||Instances / databases||Business justification||Compensating control||Risk owner||Approved by / on||Expires on||Excluded in Tenable?||Status||
+|*DBEXC-001*|_\[MSSQL-SVC-002\]_|_\[Microsoft SQL Server\]_|_\[Instance names / CMDB IDs\]_|_\[e.g., Database Mail needed for application alerts\]_|_\[e.g., SMTP relay restricted to internal domain\]_|_\[Name, role\]_|_\[Name / YYYY-MM-DD\]_|YYYY-MM-DD|_\[Yes / No\]_|{status:colour=Green|title=ACTIVE}|

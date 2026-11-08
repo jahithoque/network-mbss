@@ -1,0 +1,111 @@
+{details:id=dbsec-platform}
+||Platform|Teradata|
+||Product|Teradata Vantage (on-premises / VantageCore, VantageCloud Enterprise)|
+||Versions in scope|_\[e.g., 17.20, 20.00\]_|
+||Policy|{{SEC-POL-DB-001}}|
+||Technical basis|No CIS Benchmark is published. Company baseline derived from the Teradata Vantage Security Administration guide and DB-COM controls|
+||Tenable audit file(s)|No Tenable database audit for Teradata. Planned: custom Unix audit running BTEQ queries on a TPA node (cmd_exec)|
+||Tenable credential|SSH credential to a TPA node for the custom audit; until then MANUAL review|
+||Control prefix|{{TD}}|
+||Instances in scope|_\[count or link to CMDB\]_|
+||Controls|10|
+||Automated (Tenable)|0 of 10|
+||Compliance % (last scan)|0%|
+||Open CRITICAL / HIGH|0|
+||Last Tenable scan|YYYY-MM-DD|
+||Owner team|_\[Team\]_|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* *No CIS Benchmark and no native Tenable database checks.* Every control on this page is reviewed MANUALLY until the custom audit is built (see the Automation status in each row).
+* Node OS (SLES) hardening follows the company Linux standard and is scanned by the Tenable Unix audit.
+* VantageCloud Lake: controls the provider manages are N/A.
+
+h2. Tenable assessment setup
+
+||Item||Value||
+|*Scan template*|Policy Compliance Auditing (credentialed)|
+|*Audit file(s)*|No Tenable database audit for Teradata. Planned: custom Unix audit running BTEQ queries on a TPA node (cmd_exec)|
+|*Credential*|SSH credential to a TPA node for the custom audit; until then MANUAL review|
+|*Scan account privileges*|{{SELECT}} on the {{DBC}} dictionary views listed below; no DBC or security administrator rights|
+|*Tailoring*|Company values from the register below override CIS defaults in the tailored audit file. Store it in _\[repository / Tenable policy name\]_|
+
+h2. Control register
+
+{info:title=How to maintain this register}
+* One row per control. Control IDs are never renumbered or reused.
+* *Tenable Check* describes what the audit item reads and its pass condition. Copy the CIS section from the audit item's {{reference}} field into *CIS Reference*.
+* Changing a Compliant Value is a policy change: record it in the change log and get approval.
+* After every scan, update Compliance % and Open CRITICAL / HIGH in the table at the top of the page.
+{info}
+
+||Control ID||Control Name||Domain||Requirement||Severity||Compliant Value||Tenable Check (Audit / Query)||CIS Reference||Assessment||Last Review (Date / By)||Comments||
+|*TD-VER-001*|Supported release with current PUT / patches|{{VER}}|The system runs a supported Vantage release and current efixes within the patch SLA.|{status:colour=Red|title=CRITICAL}|{{SELECT InfoData FROM DBC.DBCInfoV}} in the approved version list|Manual: query {{DBC.DBCInfoV}}|_\[CIS § from .audit\]_|{status:colour=Blue|title=MANUAL}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-AAA-001*|DBC user protected|{{AAA}}|The DBC user is not used for daily administration, has a vaulted password, and can log on only from approved hosts.|{status:colour=Red|title=CRITICAL}|DBC password in PAM; logon rules limit DBC to approved hosts; no direct DBC sessions in {{DBC.LogOnOffV}} outside break-glass|Manual: {{DBC.LogonRulesV}} and {{DBC.LogOnOffV}}|_\[CIS § from .audit\]_|{status:colour=Blue|title=MANUAL}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-AAA-002*|System password and lockout defaults|{{AAA}}|System-wide password defaults meet the corporate password standard.|{status:colour=Yellow|title=HIGH}|{{PasswordMinChar}} ≥ 14, digits and special characters required, {{MaxLogonAttempts}} ≤ 5, {{LockedUserExpire}} ≥ 30 min, {{ExpirePassword}} ≤ 90 days, {{PasswordReuse}} ≥ 365 days|Manual: {{SELECT * FROM DBC.SysSecDefaults}}|_\[CIS § from .audit\]_|{status:colour=Purple|title=PLANNED}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-AAA-003*|Central authentication|{{AAA}}|Human users authenticate through LDAP / Kerberos (TDGSS). TD2 (database) authentication is limited to service and break-glass accounts.|{status:colour=Yellow|title=HIGH}|Default mechanism LDAP or KRB5 in TDGSS config; TD2 users listed and approved|Manual: TDGSS configuration on the TPA node|_\[CIS § from .audit\]_|{status:colour=Blue|title=MANUAL}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-PRIV-001*|Role-based access, no PUBLIC grants|{{PRIV}}|Access is granted through roles. Nothing is granted to PUBLIC or ALL beyond defaults, and WITH GRANT OPTION is limited to administrators.|{status:colour=Yellow|title=HIGH}|No user-level grants outside admin accounts in {{DBC.AllRightsV}}; no {{GrantAuthority = 'Y'}} to non-admins|Manual: {{DBC.AllRightsV}}, {{DBC.AllRoleRightsV}}|_\[CIS § from .audit\]_|{status:colour=Purple|title=PLANNED}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-PRIV-002*|Dictionary access restricted|{{PRIV}}|Users see only the dictionary rows about objects they can access (X views), and direct access to DBC tables is revoked from PUBLIC.|{status:colour=Blue|title=MEDIUM}|Applications use {{DBC.*VX}} views; PUBLIC SELECT on DBC tables revoked|Manual: {{DBC.AllRightsV WHERE UserName = 'PUBLIC'}}|_\[CIS § from .audit\]_|{status:colour=Blue|title=MANUAL}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-CRYPTO-001*|Encryption in transit|{{CRYPTO}}|Client connections are encrypted with TLS (Vantage 17.10+) or TDGSS confidentiality.|{status:colour=Yellow|title=HIGH}|TLS enabled on the gateway with TLS 1.2+, or TDGSS {{ConfidentialityRequired}} = yes (AES-256)|Manual: gateway ({{gtwcontrol}}) and TDGSS configuration|_\[CIS § from .audit\]_|{status:colour=Blue|title=MANUAL}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-CRYPTO-002*|Encryption at rest|{{CRYPTO}}|Systems holding Confidential data use self-encrypting drives or Vantage storage encryption; backups are encrypted.|{status:colour=Yellow|title=HIGH}|SED / storage encryption enabled; backup encryption enabled in DSA / BAR|Manual: platform evidence from Teradata support|_\[CIS § from .audit\]_|{status:colour=Grey|title=NOT FEASIBLE}|_\[YYYY-MM-DD / Name\]_|Not visible from SQL; evidence collected annually.|
+|*TD-LOG-001*|Access logging and DBQL|{{LOG}}|Logons, failed logons, grants / revokes and access to sensitive objects are logged; DBQL is enabled; logs are forwarded to the SIEM.|{status:colour=Yellow|title=HIGH}|Access logging rules in {{DBC.AccLogRulesV}} for GRANT, REVOKE, CREATE / DROP USER; DBQL active in {{DBC.DBQLRulesV}}|Manual: {{DBC.AccLogRulesV}}, {{DBC.DBQLRulesV}}|_\[CIS § from .audit\]_|{status:colour=Purple|title=PLANNED}|_\[YYYY-MM-DD / Name\]_| |
+|*TD-NET-001*|Logon rules restrict client hosts|{{NET}}|Logon rules allow each privileged user only from approved client hosts.|{status:colour=Blue|title=MEDIUM}|{{GRANT LOGON ON <host> TO <user>}} rules present for privileged users|Manual: {{DBC.LogonRulesV}}|_\[CIS § from .audit\]_|{status:colour=Blue|title=MANUAL}|_\[YYYY-MM-DD / Name\]_| |
+|_\[TD-DOMAIN-NNN\]_|_\[Short control name\]_|_\[Domain\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Value that passes\]_|_\[Audit item / query + pass condition\]_|_\[CIS §\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, exception IDs\]_|
+
+h2. Control details
+
+Optional. Copy this expand for each control that needs more detail than the register holds.
+
+{expand:title=TD-VER-001 – Supported release with current PUT / patches – details (example)}
+||Field||Value||
+|*Applies to*|_\[All instances / production only / CDB only / ...\]_|
+|*Rationale / risk*|_\[Why the control exists; what happens if it is not met\]_|
+|*Tenable audit item*|_\[Description string of the check in the .audit file\]_|
+|*Audit file and version*|_\[File name, version, date\]_|
+|*Check type*|_\[SQL query / config file / registry / manual\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not installed or not licensed\]_|
+|*Remediation impact*|_\[None / restart required / application change\]_|
+|*CIS reference*|_\[Benchmark name, version, section\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+
+*Evidence query (example, verify before use):*
+
+{code}
+SELECT PasswordMinChar, PasswordDigits, PasswordSpecChar,
+       MaxLogonAttempts, LockedUserExpire, ExpirePassword, PasswordReuse
+  FROM DBC.SysSecDefaults;
+{code}
+
+*Remediation (example, apply through change management):*
+
+{code}
+UPDATE DBC.SysSecDefaults
+   SET PasswordMinChar = 14, MaxLogonAttempts = 5, ExpirePassword = 90, PasswordReuse = 365;
+-- takes effect after the next system restart or tpareset; follow the change process
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[Compliant / remediated / exception raised\]_|_\[Notes\]_|
+{expand}
+
+h2. Known Tenable limitations & false positives
+
+||Control ID||Limitation / false-positive scenario||Impact||Workaround||
+|_\[TD-DOMAIN-NNN\]_|_\[What the audit gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step or audit tailoring\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

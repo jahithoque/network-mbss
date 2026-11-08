@@ -1,0 +1,112 @@
+{details:id=dbsec-platform}
+||Platform|Oracle|
+||Product|Oracle Database (single instance, RAC, Data Guard; CDB and PDBs)|
+||Versions in scope|_\[e.g., 19c, 23ai\]_|
+||Policy|{{SEC-POL-DB-001}}|
+||Technical basis|CIS Oracle Database 19c Benchmark (use the 23ai benchmark for 23ai)|
+||Tenable audit file(s)|CIS_Oracle_Database_19c_*.audit (database checks) + CIS Unix audit for listener / file checks|
+||Tenable credential|Database credential, type Oracle (SID or service name; scan each PDB as well as the CDB)|
+||Control prefix|{{ORA}}|
+||Instances in scope|_\[count or link to CMDB\]_|
+||Controls|13|
+||Automated (Tenable)|9 of 13|
+||Compliance % (last scan)|0%|
+||Open CRITICAL / HIGH|0|
+||Last Tenable scan|YYYY-MM-DD|
+||Owner team|_\[Team\]_|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Apply database-level controls to the CDB root and to every PDB. State in Comments if a control is CDB-only.
+* Listener and {{sqlnet.ora}} controls are checked through the Unix (SSH) part of the scan on the database host.
+* Oracle Autonomous / managed cloud services: controls the provider manages are N/A; record them in Comments.
+
+h2. Tenable assessment setup
+
+||Item||Value||
+|*Scan template*|Policy Compliance Auditing (credentialed)|
+|*Audit file(s)*|CIS_Oracle_Database_19c_*.audit (database checks) + CIS Unix audit for listener / file checks|
+|*Credential*|Database credential, type Oracle (SID or service name; scan each PDB as well as the CDB)|
+|*Scan account privileges*|{{CREATE SESSION}}, {{SELECT ANY DICTIONARY}} (or {{SELECT_CATALOG_ROLE}}), {{AUDIT_VIEWER}}; no DBA role|
+|*Tailoring*|Company values from the register below override CIS defaults in the tailored audit file. Store it in _\[repository / Tenable policy name\]_|
+
+h2. Control register
+
+{info:title=How to maintain this register}
+* One row per control. Control IDs are never renumbered or reused.
+* *Tenable Check* describes what the audit item reads and its pass condition. Copy the CIS section from the audit item's {{reference}} field into *CIS Reference*.
+* Changing a Compliant Value is a policy change: record it in the change log and get approval.
+* After every scan, update Compliance % and Open CRITICAL / HIGH in the table at the top of the page.
+{info}
+
+||Control ID||Control Name||Domain||Requirement||Severity||Compliant Value||Tenable Check (Audit / Query)||CIS Reference||Assessment||Last Review (Date / By)||Comments||
+|*ORA-VER-001*|Supported release with current Release Update|{{VER}}|The database runs a release under Oracle Premier or Extended Support with a Release Update no older than the previous quarterly CPU.|{status:colour=Red|title=CRITICAL}|Latest or previous quarterly RU in {{DBA_REGISTRY_SQLPATCH}}|{{SELECT banner_full FROM v$version}} and latest {{DBA_REGISTRY_SQLPATCH}} entry; compared with the approved RU list|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Tenable reports the version; the approved RU list is maintained by the DBA team.|
+|*ORA-AAA-001*|No default passwords|{{AAA}}|No account may use an Oracle default password. Unused Oracle-supplied accounts are locked and expired.|{status:colour=Red|title=CRITICAL}|{{SELECT * FROM dba_users_with_defpwd}} returns no rows|Query {{DBA_USERS_WITH_DEFPWD}}; FAIL on any row|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-AAA-002*|Password and lockout profile|{{AAA}}|Every profile used by a non-service account enforces the corporate password standard and a verify function.|{status:colour=Yellow|title=HIGH}|{{FAILED_LOGIN_ATTEMPTS}} ≤ 5, {{PASSWORD_LOCK_TIME}} ≥ 1, {{PASSWORD_LIFE_TIME}} ≤ 90, {{PASSWORD_REUSE_MAX}} ≥ 10, {{PASSWORD_GRACE_TIME}} ≤ 5, {{PASSWORD_VERIFY_FUNCTION}} not NULL|Query {{DBA_PROFILES}} for each profile assigned in {{DBA_USERS}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_|Service accounts use a separate profile with no expiry; their passwords are rotated by PAM.|
+|*ORA-AAA-003*|Remote OS authentication disabled|{{AAA}}|The database must not trust the client operating system to authenticate users or roles.|{status:colour=Yellow|title=HIGH}|{{REMOTE_OS_AUTHENT}} / {{REMOTE_OS_ROLES}} = FALSE, {{OS_ROLES}} = FALSE|Query {{v$parameter}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-AAA-004*|Password file restricted|{{AAA}}|Remote SYSDBA logon through a password file is allowed only where a documented need exists (e.g., Data Guard).|{status:colour=Blue|title=MEDIUM}|{{REMOTE_LOGIN_PASSWORDFILE}} = NONE, or EXCLUSIVE with an approved exception|Query {{v$parameter}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-PRIV-001*|No PUBLIC execute on network and file packages|{{PRIV}}|PUBLIC must not have EXECUTE on packages that read files, open network connections or run dynamic SQL / Java.|{status:colour=Yellow|title=HIGH}|No PUBLIC grant on {{UTL_FILE}}, {{UTL_TCP}}, {{UTL_HTTP}}, {{UTL_SMTP}}, {{UTL_INADDR}}, {{DBMS_JAVA}}, {{DBMS_SCHEDULER}}, {{DBMS_LOB}}|Query {{DBA_TAB_PRIVS WHERE grantee='PUBLIC'}} for the package list|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-PRIV-002*|Powerful privileges restricted|{{PRIV}}|*ANY* system privileges, DBA, and administrative privileges (SYSDBA, SYSOPER, SYSBACKUP…) are granted only to approved accounts.|{status:colour=Yellow|title=HIGH}|Grantees in {{DBA_SYS_PRIVS}} / {{DBA_ROLE_PRIVS}} / {{v$pwfile_users}} match the approved list|Tenable lists grantees; reviewer compares with the approved list|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Tenable cannot know the approved list; record the review outcome here.|
+|*ORA-SVC-001*|Security initialization parameters|{{SVC}}|Security-related initialization parameters are set to the company values.|{status:colour=Blue|title=MEDIUM}|{{SEC_MAX_FAILED_LOGIN_ATTEMPTS}} ≤ 3, {{SEC_PROTOCOL_ERROR_FURTHER_ACTION}} = (DROP,3), {{SEC_RETURN_SERVER_RELEASE_BANNER}} = FALSE, {{SQL92_SECURITY}} = TRUE, {{_TRACE_FILES_PUBLIC}} = FALSE, {{RESOURCE_LIMIT}} = TRUE|Query {{v$parameter}} / {{x$ksppcv}} for hidden parameters|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-SVC-002*|Sample schemas removed|{{SVC}}|Sample schemas (HR, OE, SH, PM, IX, BI, SCOTT) are not installed in production databases.|{status:colour=Grey|title=LOW}|No sample schema in {{DBA_USERS}}|Query {{DBA_USERS}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-NET-001*|Listener hardened|{{NET}}|The listener cannot be reconfigured at run time and does not offer external procedures.|{status:colour=Yellow|title=HIGH}|{{ADMIN_RESTRICTIONS_<listener>=ON}} in {{listener.ora}}; no {{EXTPROC}} entry|Unix audit: content check on {{$ORACLE_HOME/network/admin/listener.ora}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-CRYPTO-001*|Network encryption required|{{CRYPTO}}|All client connections are encrypted with TLS or Oracle native network encryption.|{status:colour=Yellow|title=HIGH}|{{SQLNET.ENCRYPTION_SERVER = REQUIRED}}, {{SQLNET.ENCRYPTION_TYPES_SERVER = (AES256)}}, or TCPS only with TLS 1.2+|Unix audit: content check on {{sqlnet.ora}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*ORA-CRYPTO-002*|Encryption at rest (TDE)|{{CRYPTO}}|Databases classified Confidential or higher use TDE tablespace encryption with the keystore outside the data files.|{status:colour=Yellow|title=HIGH}|Keystore OPEN in {{v$encryption_wallet}}; user tablespaces ENCRYPTED = YES|Query {{v$encryption_wallet}} and {{DBA_TABLESPACES}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Tenable cannot see data classification; scope comes from the CMDB.|
+|*ORA-LOG-001*|Unified auditing policies|{{LOG}}|Unified auditing records logons, privilege use and security-relevant changes and is forwarded to the SIEM.|{status:colour=Yellow|title=HIGH}|Policies enabled in {{AUDIT_UNIFIED_ENABLED_POLICIES}} cover LOGON / LOGOFF, {{ORA_SECURECONFIG}}, {{ORA_ACCOUNT_MGMT}}, {{ORA_DATABASE_PARAMETER}}|Query {{AUDIT_UNIFIED_ENABLED_POLICIES}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|SIEM forwarding is confirmed manually by the SOC.|
+|_\[ORA-DOMAIN-NNN\]_|_\[Short control name\]_|_\[Domain\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Value that passes\]_|_\[Audit item / query + pass condition\]_|_\[CIS §\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, exception IDs\]_|
+
+h2. Control details
+
+Optional. Copy this expand for each control that needs more detail than the register holds.
+
+{expand:title=ORA-VER-001 – Supported release with current Release Update – details (example)}
+||Field||Value||
+|*Applies to*|_\[All instances / production only / CDB only / ...\]_|
+|*Rationale / risk*|_\[Why the control exists; what happens if it is not met\]_|
+|*Tenable audit item*|_\[Description string of the check in the .audit file\]_|
+|*Audit file and version*|_\[File name, version, date\]_|
+|*Check type*|_\[SQL query / config file / registry / manual\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not installed or not licensed\]_|
+|*Remediation impact*|_\[None / restart required / application change\]_|
+|*CIS reference*|_\[Benchmark name, version, section\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+
+*Evidence query (example, verify before use):*
+
+{code}
+SELECT username, account_status
+  FROM dba_users_with_defpwd d JOIN dba_users u USING (username);
+{code}
+
+*Remediation (example, apply through change management):*
+
+{code}
+ALTER USER <username> PASSWORD EXPIRE ACCOUNT LOCK;
+-- or set a new password if the account is required
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[Compliant / remediated / exception raised\]_|_\[Notes\]_|
+{expand}
+
+h2. Known Tenable limitations & false positives
+
+||Control ID||Limitation / false-positive scenario||Impact||Workaround||
+|_\[ORA-DOMAIN-NNN\]_|_\[What the audit gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step or audit tailoring\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|

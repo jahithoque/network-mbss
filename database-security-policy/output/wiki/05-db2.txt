@@ -1,0 +1,110 @@
+{details:id=dbsec-platform}
+||Platform|IBM Db2|
+||Product|IBM Db2 for Linux, UNIX and Windows (LUW), including HADR|
+||Versions in scope|_\[e.g., 11.5.x\]_|
+||Policy|{{SEC-POL-DB-001}}|
+||Technical basis|CIS IBM Db2 11 Benchmark|
+||Tenable audit file(s)|CIS_IBM_DB2_11_*.audit (database checks) + Unix audit for instance file permissions|
+||Tenable credential|Database credential, type DB2 (database name and port; one entry per database)|
+||Control prefix|{{DB2}}|
+||Instances in scope|_\[count or link to CMDB\]_|
+||Controls|11|
+||Automated (Tenable)|7 of 11|
+||Compliance % (last scan)|0%|
+||Open CRITICAL / HIGH|0|
+||Last Tenable scan|YYYY-MM-DD|
+||Owner team|_\[Team\]_|
+||Next review due|YYYY-MM-DD|
+{details}
+
+{warning:title=Company policy – SEC-POL-DB-001}
+This page is part of the company Database Security Configuration Policy (SEC-POL-DB-001). Its requirements are mandatory for every database in scope. Deviations need an approved entry in the DB Security – Exceptions Register. CIS Benchmarks and Tenable audit files are the technical basis and assessment method; where this policy differs from CIS, this policy applies.
+{warning}
+
+{toc:maxLevel=2}
+
+h2. Scope & applicability
+
+* Instance (DBM CFG) controls apply once per instance; database (DB CFG) controls apply to every database in the instance.
+* Db2 for z/OS and Db2 for i are out of scope of this page.
+
+h2. Tenable assessment setup
+
+||Item||Value||
+|*Scan template*|Policy Compliance Auditing (credentialed)|
+|*Audit file(s)*|CIS_IBM_DB2_11_*.audit (database checks) + Unix audit for instance file permissions|
+|*Credential*|Database credential, type DB2 (database name and port; one entry per database)|
+|*Scan account privileges*|{{CONNECT}} on each database, {{SELECT}} on {{SYSCAT}} views, SYSMON authority; no SYSADM / DBADM|
+|*Tailoring*|Company values from the register below override CIS defaults in the tailored audit file. Store it in _\[repository / Tenable policy name\]_|
+
+h2. Control register
+
+{info:title=How to maintain this register}
+* One row per control. Control IDs are never renumbered or reused.
+* *Tenable Check* describes what the audit item reads and its pass condition. Copy the CIS section from the audit item's {{reference}} field into *CIS Reference*.
+* Changing a Compliant Value is a policy change: record it in the change log and get approval.
+* After every scan, update Compliance % and Open CRITICAL / HIGH in the table at the top of the page.
+{info}
+
+||Control ID||Control Name||Domain||Requirement||Severity||Compliant Value||Tenable Check (Audit / Query)||CIS Reference||Assessment||Last Review (Date / By)||Comments||
+|*DB2-VER-001*|Supported release with current fix pack|{{VER}}|The instance runs a supported Db2 release at the latest mod pack / fix pack within the patch SLA.|{status:colour=Red|title=CRITICAL}|{{db2level}} in the approved version list|{{SELECT * FROM SYSIBMADM.ENV_INST_INFO}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-AAA-001*|Server-side authentication|{{AAA}}|The instance authenticates users on the server with encrypted credentials and does not trust client authentication.|{status:colour=Red|title=CRITICAL}|{{AUTHENTICATION = SERVER_ENCRYPT}} (or KERBEROS / GSSPLUGIN); {{TRUST_ALLCLNTS = NO}}; {{TRUST_CLNTAUTH = SERVER}}|Query {{SYSIBMADM.DBMCFG}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-AAA-002*|Dedicated authority groups|{{AAA}}|SYSADM, SYSCTRL, SYSMAINT and SYSMON authorities map to dedicated OS groups with approved members.|{status:colour=Yellow|title=HIGH}|{{SYSADM_GROUP}}, {{SYSCTRL_GROUP}}, {{SYSMAINT_GROUP}}, {{SYSMON_GROUP}} set to dedicated groups|Query {{SYSIBMADM.DBMCFG}}; group membership via Unix audit|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-PRIV-001*|PUBLIC privileges revoked|{{PRIV}}|PUBLIC holds no database authorities; databases are created RESTRICTIVE or the defaults are revoked.|{status:colour=Yellow|title=HIGH}|No {{CONNECTAUTH}}, {{CREATETABAUTH}}, {{BINDADDAUTH}}, {{IMPLSCHEMAAUTH}} for PUBLIC in {{SYSCAT.DBAUTH}}|Query {{SYSCAT.DBAUTH WHERE GRANTEE = 'PUBLIC'}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-PRIV-002*|Separation of duties for SECADM|{{PRIV}}|SECADM is held by a security administrator who does not hold DBADM or DATAACCESS.|{status:colour=Yellow|title=HIGH}|No grantee holds SECADM together with DBADM or DATAACCESS|Query {{SYSCAT.DBAUTH}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-PRIV-003*|Catalog access restricted|{{PRIV}}|SELECT on the system catalog is not granted to PUBLIC where applications do not need it.|{status:colour=Blue|title=MEDIUM}|No PUBLIC SELECT on {{SYSCAT.*}} / {{SYSIBM.*}} (RESTRICT_ACCESS = YES)|Query {{SYSCAT.TABAUTH}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-CRYPTO-001*|TLS-only communication|{{CRYPTO}}|Clients connect over TLS 1.2 or higher; plaintext TCP/IP is disabled.|{status:colour=Yellow|title=HIGH}|{{DB2COMM = SSL}}; {{SSL_VERSIONS = TLSV12,TLSV13}}; {{SSL_SVR_KEYDB}} set|Query {{SYSIBMADM.DBMCFG}}; {{db2set -all}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-CRYPTO-002*|Native encryption at rest|{{CRYPTO}}|Databases classified Confidential or higher use Db2 native encryption with a keystore (PKCS#12 or KMIP).|{status:colour=Yellow|title=HIGH}|{{ENCRYPTED = YES}} in {{SYSPROC.ADMIN_GET_ENCRYPTION_INFO}}|{{SELECT * FROM TABLE(SYSPROC.ADMIN_GET_ENCRYPTION_INFO())}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_|Data classification comes from the CMDB.|
+|*DB2-LOG-001*|db2audit configured|{{LOG}}|The instance audit facility records security-relevant categories and is archived to the SIEM.|{status:colour=Yellow|title=HIGH}|{{AUDIT}}, {{CHECKING}}, {{OBJMAINT}}, {{SECMAINT}}, {{SYSADMIN}}, {{VALIDATE}} = BOTH; database audit policy assigned|{{db2audit describe}} via Unix audit; {{SYSCAT.AUDITPOLICIES}}|_\[CIS § from .audit\]_|{status:colour=Yellow|title=PARTIAL}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-NET-001*|Discovery disabled|{{NET}}|The instance and databases cannot be discovered by DB2 discovery requests.|{status:colour=Blue|title=MEDIUM}|{{DISCOVER = DISABLE}}; {{DISCOVER_INST = DISABLE}}; {{DISCOVER_DB = DISABLE}}|Query {{SYSIBMADM.DBMCFG}} / {{SYSIBMADM.DBCFG}}|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|*DB2-OS-001*|Instance owner and file permissions|{{OS}}|The instance runs under a dedicated non-root owner; the instance home and sqllib directories are not writable by others.|{status:colour=Blue|title=MEDIUM}|Instance owner ≠ root; {{sqllib}} and database paths mode 750 or stricter|Unix audit: file permission checks|_\[CIS § from .audit\]_|{status:colour=Green|title=AUTOMATED}|_\[YYYY-MM-DD / Name\]_| |
+|_\[DB2-DOMAIN-NNN\]_|_\[Short control name\]_|_\[Domain\]_|_\[What must be true\]_|_\[CRITICAL / HIGH / MEDIUM / LOW\]_|_\[Value that passes\]_|_\[Audit item / query + pass condition\]_|_\[CIS §\]_|_\[AUTOMATED / PARTIAL / MANUAL / PLANNED / NOT FEASIBLE\]_|_\[YYYY-MM-DD / Name\]_|_\[Caveats, exception IDs\]_|
+
+h2. Control details
+
+Optional. Copy this expand for each control that needs more detail than the register holds.
+
+{expand:title=DB2-VER-001 – Supported release with current fix pack – details (example)}
+||Field||Value||
+|*Applies to*|_\[All instances / production only / CDB only / ...\]_|
+|*Rationale / risk*|_\[Why the control exists; what happens if it is not met\]_|
+|*Tenable audit item*|_\[Description string of the check in the .audit file\]_|
+|*Audit file and version*|_\[File name, version, date\]_|
+|*Check type*|_\[SQL query / config file / registry / manual\]_|
+|*Pass condition*|_\[Exact condition\]_|
+|*Not applicable when*|_\[e.g., feature not installed or not licensed\]_|
+|*Remediation impact*|_\[None / restart required / application change\]_|
+|*CIS reference*|_\[Benchmark name, version, section\]_|
+|*Exceptions*|_\[EXC-IDs, or None\]_|
+
+*Evidence query (example, verify before use):*
+
+{code}
+SELECT NAME, VALUE FROM SYSIBMADM.DBMCFG
+ WHERE NAME IN ('authentication', 'trust_allclnts', 'trust_clntauth', 'discover');
+{code}
+
+*Remediation (example, apply through change management):*
+
+{code}
+db2 update dbm cfg using AUTHENTICATION SERVER_ENCRYPT TRUST_ALLCLNTS NO TRUST_CLNTAUTH SERVER
+db2stop
+db2start
+{code}
+
+*Review history*
+
+||Date||Reviewed by||Outcome||Notes||
+|YYYY-MM-DD|_\[Name\]_|_\[Compliant / remediated / exception raised\]_|_\[Notes\]_|
+{expand}
+
+h2. Known Tenable limitations & false positives
+
+||Control ID||Limitation / false-positive scenario||Impact||Workaround||
+|_\[DB2-DOMAIN-NNN\]_|_\[What the audit gets wrong\]_|_\[Missed FAIL / false FAIL\]_|_\[Manual step or audit tailoring\]_|
+
+h2. Page change log
+
+||Version||Date||Author||Change||Approved by||
+|0.1|YYYY-MM-DD|_\[Name\]_|Initial draft|_\[Name\]_|
+|_\[x.y\]_|YYYY-MM-DD|_\[Name\]_|_\[What changed\]_|_\[Name\]_|
